@@ -20,12 +20,13 @@ PerObjTypeList = ''
 DataTypeDef = ''
 LDataType = ''
 LPerFb = ''
+XXXWs = ''
 
 def index(request):
     # request.POST
     # request.GET
     # return HttpResponse("hello world!")
-    global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis,neBase,PerObjTypeList,DataTypeDef,LDataType,LPerFb
+    global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis,neBase,PerObjTypeList,DataTypeDef,LDataType,LPerFb,XXXWs
     requestPerTabelName = ''
     requestPerList = []
     LPerId = ''
@@ -38,6 +39,7 @@ def index(request):
     DataTypeDef = ''
     LDataType = ''
     LPerFb = ''
+    XXXWs = ''
 
     if request.method == 'POST':
 
@@ -61,6 +63,7 @@ def index(request):
         DataTypeDef = getDataTypeDef()
         LDataType = getLDataType()
         LPerFb = getLPerFb(requestPerTabelName, requestPerTabelId)
+        XXXWs = getXXXWs()
 
         for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp):
             requestPerList.append({'name': requestPerNameTemp, 'id': requestPerIdTemp})
@@ -82,7 +85,16 @@ def index(request):
                                           'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis,
                                           'neBaseOtrXml': neBase, 'PerObjTypeList': PerObjTypeList,
                                           'DataTypeDef': DataTypeDef, 'LDataType': LDataType,
-                                          'LPerFb': LPerFb})
+                                          'LPerFb': LPerFb, 'XXXWs':XXXWs})
+
+
+def getXXXWs():
+    global PerXXXCur
+    global PerXXXHis
+    return'''
+	<Spec>''' + PerXXXCur['name'] + '''.V0.ts</Spec>
+	<Spec>''' + PerXXXHis['name'] + '''.V0.ts</Spec>
+    '''
 
 def getLPerFb(requestPerTabelName, requestPerTabelId):
     return '''
