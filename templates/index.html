@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>test</title>
+</head>
+<body>
+    <h1 style="background-color: antiquewhite;color: black;">自动生成性能规格</h1>
+    <h2 style="...">需要生成的性能</h2>
+        <form action="/index/" method="post">{% csrf_token %}
+            <label>表名</label>
+            <input type="text" name="requestPerTabelName"/>
+            <label>性能名称</label>
+            <input type="text" name="requestPerName"/>
+            <label>性能ID</label>
+            <input type="text" name="requestPerId"/>
+            <input type="submit" value="提交"/>
+        </form>
+    <hr />
+    <h2 style="...">生成结果</h2>
+        <table border="1">
+        <caption>{{ tableName }}</caption>
+            <thead>
+                <th>需要添加的性能</th>
+                <th>对应的性能码</th>
+            </thead>
+            <tbody>
+                {% for line in data %}
+                    <tr>
+                        <td>{{ line.name }}</td>
+                        <td>{{ line.id }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    <label>LPerId.V0.td</label>
+    <br>
+    <textarea rows="20" cols="80">{{ LperIdTd }}</textarea>
+    <br>
+    <label>PerIdUint.V0.td</label>
+    <br>
+    <textarea rows="20" cols="80">{{ PerIdUnitTd }}</textarea>
+    <br>
+    <label>LPerPrimId.V0.td</label>
+    <br>
+    <textarea rows="20" cols="80">{{ LPerPrimIdTd }}</textarea>
+    <br>
+    <label>{{ PerXXXCurTd.name }}.VX.td</label>
+    <br>
+    <textarea rows="20" cols="80">{{ PerXXXCurTd.data }}</textarea>
+    <br>
+    <label>{{ PerXXXHisTd.name }}.VX.td</label>
+    <br>
+    <textarea rows="20" cols="80">{{ PerXXXHisTd.data }}</textarea>
+    <br>
+
+    <script src="/static/js/jquery-1.12.4.js"></script>
+</body>
+</html>
