@@ -10,9 +10,11 @@
         <form action="/index/" method="post">{% csrf_token %}
             <label>表名</label>
             <input type="text" name="requestPerTabelName"/>
-            <label>性能名称</label>
+            <label>表ID</label>
+            <input type="text" name="requestPerTabelId"/>
+            <label>性能名称（可输入多个）</label>
             <input type="text" name="requestPerName"/>
-            <label>性能ID</label>
+            <label>性能ID（可输入多个或范围）</label>
             <input type="text" name="requestPerId"/>
             <input type="submit" value="提交"/>
         </form>
@@ -52,6 +54,10 @@
     <label>{{ PerXXXHisTd.name }}.VX.td</label>
     <br>
     <textarea rows="20" cols="80">{{ PerXXXHisTd.data }}</textarea>
+    <br>
+    <label>ne_base_.ort.xml</label>
+    <br>
+    <textarea rows="20" cols="80">{{ neBaseOtrXml }}</textarea>
     <br>
 
     <script src="/static/js/jquery-1.12.4.js"></script>

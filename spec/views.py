@@ -44,8 +44,9 @@ def index(request):
             requestPerIdListTemp = re.split("[_/\\\\,.\;:`|<> ]", requestPerId)
         requestPerIdListTemp = filter(None, requestPerIdListTemp)  # 去除空值
 
-        getPerXXXCurStart(PerXXXCur, requestPerTabelName)
-        getPerXXXHisStart(PerXXXHis, requestPerTabelName)
+        setPerXXXCurStart(PerXXXCur, requestPerTabelName)
+        setPerXXXHisStart(PerXXXHis, requestPerTabelName)
+        neBase = getNeBaseOtrStart(requestPerTabelName)
 
         for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp):
             requestPerList.append({'name': requestPerNameTemp, 'id': requestPerIdTemp})
@@ -55,35 +56,48 @@ def index(request):
             LPerPrimId += getLPerPrimId(requestPerIdTemp, requestPerNameTemp)
             PerXXXCur['data'] += getPerXXXCurData(requestPerNameTemp)
             PerXXXHis['data'] += getPerXXXHisData(requestPerNameTemp)
+            neBase += getNeBaseOtrData(requestPerNameTemp)
 
-            neBase = '''
-<attrib key="组">
-<prop typekind="0" typeid="组ID" size="0" name="组">
-</prop>
-<parent value=""></parent>
-<memo id="0"><![CDATA[]]></memo>
-<memo id="1"><![CDATA[]]></memo>
-<memo id="2"><![CDATA[]]></memo>
+        neBase += getNeBaseOtrEnd()
+        setPerXXXCurEnd(PerXXXCur)
+        setPerXXXHisEnd(PerXXXHis)
+
+    return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
+                                          'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
+                                          'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis,
+                                          'neBaseOtrXml': neBase})
+
+
+def getNeBaseOtrEnd():
+    return'''
+</attrib>
             '''
-            neBase += '''
+
+
+def getNeBaseOtrData(requestPerNameTemp):
+    return '''
 <attribelem typename="Long64" typekind="0" typeid="0" acl="3" name="''' + requestPerNameTemp + '''">
 <memo id="0"><![CDATA[]]></memo>
 <memo id="1"><![CDATA[]]></memo>
 <memo id="2"><![CDATA[]]></memo>
 </attribelem>
             '''
-            neBase += '''
-</attrib>
+
+
+def getNeBaseOtrStart(requestPerTabelName):
+    neBase = '''
+<attrib key="MPer''' + requestPerTabelName + '''">
+<prop typekind="0" typeid="组ID" size="0" name="MPer''' + requestPerTabelName + '''">
+</prop>
+<parent value=""></parent>
+<memo id="0"><![CDATA[]]></memo>
+<memo id="1"><![CDATA[]]></memo>
+<memo id="2"><![CDATA[]]></memo>
             '''
-        getPerXXXCurEnd(PerXXXCur)
-        getPerXXXHisEnd(PerXXXHis)
-
-    return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
-                                          'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
-                                          'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis})
+    return neBase
 
 
-def getPerXXXHisEnd(PerXXXHis):
+def setPerXXXHisEnd(PerXXXHis):
     PerXXXHis['data'] += '''
       <TableSpecField id="Slot" acl="0" type="Octet">
         <disp/>
@@ -133,7 +147,7 @@ def getPerXXXHisEnd(PerXXXHis):
                 '''
 
 
-def getPerXXXHisStart(PerXXXHis, requestPerTabelName):
+def setPerXXXHisStart(PerXXXHis, requestPerTabelName):
     PerXXXHis['name'] = 'Per' + requestPerTabelName + 'His'
     PerXXXHis['data'] = '''
 <?xml version="1.0" encoding="UTF-8"?>
@@ -234,7 +248,7 @@ def getPerXXXHisStart(PerXXXHis, requestPerTabelName):
         '''
 
 
-def getPerXXXCurEnd(PerXXXCur):
+def setPerXXXCurEnd(PerXXXCur):
     PerXXXCur['data'] += '''
       <TableSpecField id="period" acl="0" type="Octet">
         <disp>
@@ -270,7 +284,7 @@ def getPerXXXCurEnd(PerXXXCur):
         '''
 
 
-def getPerXXXCurStart(PerXXXCur, requestPerTabelName):
+def setPerXXXCurStart(PerXXXCur, requestPerTabelName):
     PerXXXCur['name'] = 'Per' + requestPerTabelName + 'Cur'
     PerXXXCur['data'] = '''
 <?xml version="1.0" encoding="UTF-8"?>
