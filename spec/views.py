@@ -15,13 +15,17 @@ PerIdUnit = ''
 LPerPrimId = ''
 PerXXXCur = {'name': '', 'data': ''}
 PerXXXHis = {'name': '', 'data': ''}
-
+neBase = ''
+PerObjTypeList = ''
+DataTypeDef = ''
+LDataType = ''
+LPerFb = ''
 
 def index(request):
     # request.POST
     # request.GET
     # return HttpResponse("hello world!")
-    global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis
+    global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis,neBase,PerObjTypeList,DataTypeDef,LDataType,LPerFb
     requestPerTabelName = ''
     requestPerList = []
     LPerId = ''
@@ -29,10 +33,16 @@ def index(request):
     LPerPrimId = ''
     PerXXXCur = {'name': '', 'data': ''}
     PerXXXHis = {'name': '', 'data': ''}
+    neBase = ''
+    PerObjTypeList = ''
+    DataTypeDef = ''
+    LDataType = ''
+    LPerFb = ''
 
     if request.method == 'POST':
 
         requestPerTabelName = request.POST.get('requestPerTabelName', None)
+        requestPerTabelId = request.POST.get('requestPerTabelId', None)
         requestPerName = request.POST.get('requestPerName', None)
         requestPerId = request.POST.get('requestPerId', None)
         requestPerNameListTemp = re.split("[_/\\\\,.\-;:`~|<> ]", requestPerName)
@@ -47,6 +57,10 @@ def index(request):
         setPerXXXCurStart(PerXXXCur, requestPerTabelName)
         setPerXXXHisStart(PerXXXHis, requestPerTabelName)
         neBase = getNeBaseOtrStart(requestPerTabelName)
+        PerObjTypeList = getPerObjTypeList(requestPerTabelName, requestPerTabelId)
+        DataTypeDef = getDataTypeDef()
+        LDataType = getLDataType()
+        LPerFb = getLPerFb(requestPerTabelName, requestPerTabelId)
 
         for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp):
             requestPerList.append({'name': requestPerNameTemp, 'id': requestPerIdTemp})
@@ -58,19 +72,162 @@ def index(request):
             PerXXXHis['data'] += getPerXXXHisData(requestPerNameTemp)
             neBase += getNeBaseOtrData(requestPerNameTemp)
 
-        neBase += getNeBaseOtrEnd()
+
+        neBase += getNeBaseOtrEnd(requestPerTabelName)
         setPerXXXCurEnd(PerXXXCur)
         setPerXXXHisEnd(PerXXXHis)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
                                           'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis,
-                                          'neBaseOtrXml': neBase})
+                                          'neBaseOtrXml': neBase, 'PerObjTypeList': PerObjTypeList,
+                                          'DataTypeDef': DataTypeDef, 'LDataType': LDataType,
+                                          'LPerFb': LPerFb})
+
+def getLPerFb(requestPerTabelName, requestPerTabelId):
+    return '''
+      <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="Short" val="''' + requestPerTabelId + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="中文注释"/>
+            </Any>
+            <Any>
+              <val teid="String" val="中文注释"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + requestPerTabelName + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + requestPerTabelName + '''"/>
+            </Any>
+          </val>
+        </val>
+      </Any>
+'''
+
+def getLDataType():
+    global PerXXXCur
+    global PerXXXHis
+    return '''
+      <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="Short" val="cur的ID"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXCur['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXCur['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXCur['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXCur['name'] + '''"/>
+            </Any>
+          </val>
+        </val>
+      </Any>
+      <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="Short" val="his的ID"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXHis['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXHis['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXHis['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + PerXXXHis['name'] + '''"/>
+            </Any>
+          </val>
+        </val>
+      </Any>
+    '''
+
+def getDataTypeDef():
+    global PerXXXCur
+    global PerXXXHis
+    return '''
+      <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="String" val="''' + PerXXXCur['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="Long" val="cur的ID"/>
+            </Any>
+            <Any>
+              <val teid="Long" val="0"/>
+            </Any>
+          </val>
+        </val>
+      </Any>
+      <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="String" val="''' + PerXXXHis['name'] + '''"/>
+            </Any>
+            <Any>
+              <val teid="Long" val="his的ID"/>
+            </Any>
+            <Any>
+              <val teid="Long" val="0"/>
+            </Any>
+          </val>
+        </val>
+      </Any>
+    '''
+
+def getPerObjTypeList(requestPerTabelName, requestPerTabelId):
+    return'''
+        <Any>
+          <val teid="Any_Seq">
+            <val>
+              <Any>
+                <val teid="Short" val="''' + requestPerTabelId + '''"/>
+              </Any>
+              <Any>
+                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+              </Any>
+              <Any>
+                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+              </Any>
+              <Any>
+                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+              </Any>
+              <Any>
+                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+              </Any>
+            </val>
+          </val>
+        </Any>
+              '''
 
 
-def getNeBaseOtrEnd():
+def getNeBaseOtrEnd(requestPerTabelName):
     return'''
 </attrib>
+
+
+
+
+<str value="MPer''' + requestPerTabelName + '''"></str>
+
             '''
 
 
@@ -153,7 +310,7 @@ def setPerXXXHisStart(PerXXXHis, requestPerTabelName):
 <?xml version="1.0" encoding="UTF-8"?>
 
 <ObjectPersistSpace>
-  <Spec id="Per''' + requestPerTabelName + '''His.V3" acl="0" sh="per:Per''' + requestPerTabelName + '''His">
+  <Spec id="Per''' + requestPerTabelName + '''His.VX" acl="0" sh="per:Per''' + requestPerTabelName + '''His">
     <disp>
       <String val="英文注释"/>
       <String val="中文注释"/>
