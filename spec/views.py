@@ -23,6 +23,7 @@ LPerFb = ''
 XXXWs = ''
 perToolsCpp = ''
 toolFidCpp = ''
+MtnCmdDcCpp = ''
 
 
 def index(request):
@@ -30,7 +31,7 @@ def index(request):
     # request.GET
     # return HttpResponse("hello world!")
     global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis, neBase,\
-        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, toolFidCpp
+        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, toolFidCpp, MtnCmdDcCpp
     requestPerList = []
     LPerId = ''
     PerIdUnit = ''
@@ -87,6 +88,7 @@ def index(request):
 
         perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerTabelId, requestPerNameListTemp)
         toolFidCpp = getToolFidCpp(requestPerTabelName)
+        MtnCmdDcCpp = getMtnCmdDcCpp(requestPerTabelName)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
@@ -94,7 +96,25 @@ def index(request):
                                           'neBaseOtrXml': neBase, 'PerObjTypeList': PerObjTypeList,
                                           'DataTypeDef': DataTypeDef, 'LDataType': LDataType,
                                           'LPerFb': LPerFb, 'XXXWs': XXXWs, 'perToolsCpp': perToolsCpp,
-                                          'toolFidCpp': toolFidCpp})
+                                          'toolFidCpp': toolFidCpp, 'MtnCmdDcCpp': MtnCmdDcCpp})
+
+def getMtnCmdDcCpp(requestPerTabelName):
+    return '''
+INT CMtnCmdDc::OpHook_After_MtnCmd_Add(void* pArg1, void* pArg2, const CBString& TblName, const SEQUENCE<TColValue>& listData, const CBString& expression)
+{
+	for (ULong i=0; i<cnt; i++, rcd.MoveNext())
+	{
+		if (NULL != strstr(CBStr2Str(command), "clrcurper"))
+		{
+			do {
+					else if(0 == strcmp(para,"''' + requestPerTabelName.lower() + '''"))
+					{
+                        seqPerCmd[0].type = PerObjTypeList_''' + requestPerTabelName.lower() + ''';
+					}
+			}while (NULL != sp);
+		}
+	}
+}'''
 
 def getToolFidCpp(requestPerTabelName):
     return '''
