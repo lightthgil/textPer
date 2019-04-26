@@ -16,6 +16,8 @@
             <input type="text" name="requestPerName"/>
             <label>性能ID（可输入多个或范围）</label>
             <input type="text" name="requestPerId"/>
+            <label>设备使用的性能ID（可输入多个或范围）</label>
+            <input type="text" name="requestPrimId"/>
             <input type="submit" value="提交"/>
         </form>
     <hr />
@@ -25,12 +27,14 @@
             <thead>
                 <th>需要添加的性能</th>
                 <th>对应的性能码</th>
+                <th>设备使用的性能码</th>
             </thead>
             <tbody>
                 {% for line in data %}
                     <tr>
                         <td>{{ line.name }}</td>
                         <td>{{ line.id }}</td>
+                        <td>{{ line.primId }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -79,7 +83,10 @@
     <br>
     <textarea rows="20" cols="80">{{ XXXWs }}</textarea>
     <br>
-
+    <label>per_tools.cpp</label>
+    <br>
+    <textarea rows="20" cols="80">{{ perToolsCpp }}</textarea>
+    <br>
 
 
     <script src="/static/js/jquery-1.12.4.js"></script>
