@@ -22,6 +22,7 @@ LDataType = ''
 LPerFb = ''
 XXXWs = ''
 perToolsCpp = ''
+toolFidCpp = ''
 
 
 def index(request):
@@ -29,7 +30,7 @@ def index(request):
     # request.GET
     # return HttpResponse("hello world!")
     global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis, neBase,\
-        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp
+        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, toolFidCpp
     requestPerList = []
     LPerId = ''
     PerIdUnit = ''
@@ -85,13 +86,41 @@ def index(request):
         setPerXXXHisEnd(PerXXXHis)
 
         perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerTabelId, requestPerNameListTemp)
+        toolFidCpp = getToolFidCpp(requestPerTabelName)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
                                           'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis,
                                           'neBaseOtrXml': neBase, 'PerObjTypeList': PerObjTypeList,
                                           'DataTypeDef': DataTypeDef, 'LDataType': LDataType,
-                                          'LPerFb': LPerFb, 'XXXWs': XXXWs, 'perToolsCpp': perToolsCpp})
+                                          'LPerFb': LPerFb, 'XXXWs': XXXWs, 'perToolsCpp': perToolsCpp,
+                                          'toolFidCpp': toolFidCpp})
+
+def getToolFidCpp(requestPerTabelName):
+    return '''
+extern INT CvtFid2StrToLong64( const String sFid, const PerObjTypeList type, Long64& llFid )
+{
+	switch (type)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+		if (0 == strcmp(info[0].name, "FID索引"))     //TODO：填上"FID索引"
+		{
+			uFid.''' + requestPerTabelName.lower() + '''Fid.FID索引 = (Octet)(info[i].value); //TODO：填上"FID索引"，可能需要修改上一层"''' + requestPerTabelName.lower() + '''Fid"
+		}
+		break;
+	}
+}''' + '''
+
+
+extern INT CvtFid2Long64ToStr(const Long64 llFid, const PerObjTypeList type, String sFid , ULong len_sFid)
+{
+	switch (type)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+		NSPSNPrintf(sFid, len_sFid, "\\\\\\FID索引=%d", fid->fid.value);       //TODO：填上"FID索引"
+		break;
+	}
+}'''
 
 def getPerToolsCpp(requestPerTabelName, requestPerTabelId, requestPerNameList):
     perToolsCppTemp = '''
@@ -118,7 +147,7 @@ const PER_FB_INFO_ITEM perFbInfoTable[LPerFb_max] =
 		LPerId_''' + requestPerNameList[0] + ''', ''' + str(len(requestPerNameList)) + ''', 0,
  		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上本地检测的告警列表
  		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上远端缺陷的告警列表
-	},  //''' + requestPerTabelName.lower() + '''     PerObjTypeList_''' + requestPerTabelName.lower() + ''' = ''' + requestPerTabelId + '''
+	},  //''' + requestPerTabelName.lower() + '''     LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerTabelId + '''
 };
 
 
