@@ -22,16 +22,28 @@ LDataType = ''
 LPerFb = ''
 XXXWs = ''
 perToolsCpp = ''
+perToolsH = ''
 toolFidCpp = ''
 MtnCmdDcCpp = ''
-
+NESvcCfgPerMonitorCfgCpp = ''
+NeSvcCommDataDecomposeCpp = ''
+NeSvcCommDataMtnCpp = ''
+NeSvcCfgLgCfgMngCpp = ''
+perChssHelperCpp = ''
+perChssModCpp = ''
+perChssModH = ''
+perNeModCpp = ''
+perNeModH = ''
+CMakeListsTxt = ''
 
 def index(request):
     # request.POST
     # request.GET
     # return HttpResponse("hello world!")
     global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis, neBase,\
-        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, toolFidCpp, MtnCmdDcCpp
+        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, perToolsH, toolFidCpp, MtnCmdDcCpp, \
+        NESvcCfgPerMonitorCfgCpp, NeSvcCommDataDecomposeCpp, NeSvcCommDataMtnCpp, NeSvcCfgLgCfgMngCpp,\
+        perChssHelperCpp, perChssModCpp, perChssModH, perNeModCpp, perNeModH, CMakeListsTxt
     requestPerList = []
     LPerId = ''
     PerIdUnit = ''
@@ -87,16 +99,480 @@ def index(request):
         setPerXXXHisEnd(PerXXXHis)
 
         perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerTabelId, requestPerNameListTemp)
+        perToolsH = getPerToolsH(requestPerTabelName, requestPerNameListTemp)
         toolFidCpp = getToolFidCpp(requestPerTabelName)
         MtnCmdDcCpp = getMtnCmdDcCpp(requestPerTabelName)
+        NESvcCfgPerMonitorCfgCpp = getNESvcCfgPerMonitorCfgCpp(requestPerTabelName)
+        NeSvcCommDataDecomposeCpp = getNeSvcCommDataDecomposeCpp(requestPerTabelName)
+        NeSvcCommDataMtnCpp = getNeSvcCommDataMtnCpp(requestPerTabelName)
+        NeSvcCfgLgCfgMngCpp = getNeSvcCfgLgCfgMngCpp(requestPerTabelName)
+        perChssHelperCpp = getPerChssHelperCpp(requestPerTabelName)
+        perChssModCpp = getPerChssModCpp(requestPerTabelName, requestPerTabelId)
+        perChssModH = getPerChssModH(requestPerTabelName, requestPerTabelId)
+        perNeModCpp = getPerNeModCpp(requestPerTabelName, requestPerNameListTemp)
+        perNeModH = getPerNeModH(requestPerTabelName)
+        CMakeListsTxt = getCMakeListsTxt(requestPerTabelName)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
                                           'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis,
                                           'neBaseOtrXml': neBase, 'PerObjTypeList': PerObjTypeList,
                                           'DataTypeDef': DataTypeDef, 'LDataType': LDataType,
-                                          'LPerFb': LPerFb, 'XXXWs': XXXWs, 'perToolsCpp': perToolsCpp,
-                                          'toolFidCpp': toolFidCpp, 'MtnCmdDcCpp': MtnCmdDcCpp})
+                                          'LPerFb': LPerFb, 'XXXWs': XXXWs,
+                                          'perToolsCpp': perToolsCpp, 'perToolsH': perToolsH,
+                                          'toolFidCpp': toolFidCpp, 'MtnCmdDcCpp': MtnCmdDcCpp,
+                                          'NESvcCfgPerMonitorCfgCpp': NESvcCfgPerMonitorCfgCpp,
+                                          'NeSvcCommDataDecomposeCpp': NeSvcCommDataDecomposeCpp,
+                                          'NeSvcCommDataMtnCpp': NeSvcCommDataMtnCpp,
+                                          'NeSvcCfgLgCfgMngCpp': NeSvcCfgLgCfgMngCpp,
+                                          'perChssHelperCpp': perChssHelperCpp,
+                                          'perChssModCpp': perChssModCpp, 'perChssModH': perChssModH,
+                                          'perNeModCpp': perNeModCpp, 'perNeModH': perNeModH,
+                                          'CMakeListsTxt': CMakeListsTxt})
+
+def getCMakeListsTxt(requestPerTabelName):
+    return '''
+IF(LINUX) ADD_DEFINITIONS(
+    ADD_DEFINITIONS(
+			-DPER_FB_''' + requestPerTabelName.upper() + '''
+    )
+
+
+
+
+IF(VXWORKS)
+    ADD_DEFINITIONS(
+			-DPER_FB_''' + requestPerTabelName.upper() + '''
+    )
+
+
+
+
+IF(MSVC) # FOR WIN32
+    ADD_DEFINITIONS(
+		-DPER_FB_''' + requestPerTabelName.upper() + '''
+   )
+    '''
+
+
+def getPerNeModH(requestPerTabelName):
+    return'''
+class CPerNe : public INSPModule
+{
+public:
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	CDSSrc_PerNeMsgSrc* m_per''' + requestPerTabelName + '''HisTblHandle;
+#endif
+}'''
+
+
+def getPerNeModCpp(requestPerTabelName, requestPerNameList):
+    perToolsCppTemp =  '''
+CPerNe::CPerNe(const NSPMag::MODULEHANDLE hm, void* pCfg)
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	m_per''' + requestPerTabelName + '''HisTblHandle	= NULL;
+#endif
+}
+
+
+CPerNe::~CPerNe()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	if(m_per''' + requestPerTabelName + '''HisTblHandle)
+	{
+		m_per''' + requestPerTabelName + '''HisTblHandle->~CDSSrc_PerNeMsgSrc();
+		NSPFree(m_per''' + requestPerTabelName + '''HisTblHandle);
+		m_per''' + requestPerTabelName + '''HisTblHandle = NULL;
+	}
+#endif
+}
+
+
+
+INT CPerNe::InitModule(NSPMag* pMag,void* pCfg)
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	m_per''' + requestPerTabelName + '''HisTblHandle = NSPNEW(TAG_CMM_PER) CDSSrc_PerNeMsgSrc();
+	if(m_per''' + requestPerTabelName + '''HisTblHandle)
+	{
+		m_per''' + requestPerTabelName + '''HisTblHandle->Init(m_hSch, m_ulFullModId, 
+			TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable), this);
+	}
+	else
+	{
+		return LRet_failure;
+	}
+#endif
+}
+
+
+
+INT CPerNe::Start()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	register_proxy_tbl_noexpression_hook(CRecordSetPer''' + requestPerTabelName + '''Cur::GetTableName(), TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''Cur, te_spectable), PROXY_TBL_QUERY_TIMEOUT);
+#endif
+}
+
+
+
+INT CPerNe::RegDsSrc()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	m_per''' + requestPerTabelName + '''HisTblHandle->Start();
+#endif
+}
+
+
+INT CPerNe::UnRegDsSrc()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	m_per''' + requestPerTabelName + '''HisTblHandle->Stop();
+#endif
+}
+
+
+
+INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet period, Long index, CBString &dataFidBuf)
+{
+	MPer''' + requestPerTabelName + '''* pData''' + requestPerTabelName + ''' = NULL;
+	
+	switch (pNode->type)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''*)pHis->data.ParamOut();'''
+
+    for requestPerNameTemp in requestPerNameList:
+        perToolsCppTemp += '''
+		EXPORT_DATA_NEW(pData''' + requestPerTabelName + ''', ''' + requestPerNameTemp + ''', llTemp, period, pNode);'''
+
+    perToolsCppTemp += '''
+		break;
+	}
+}
+
+
+
+void CPerNe::ProcPerHisTable(SEQUENCE<MPerHistory>& data, const SEQUENCE<Long> & flag)
+{
+	//ptppacket
+	else if (PerObjTypeList_''' + requestPerTabelName.lower() + '''== data[i].type)
+	{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+		sData.dataType = TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable);
+		WritePerHisTable((CRecordSetPer''' + requestPerTabelName + '''His*)p1, (MPer''' + requestPerTabelName + '''*)p2, (SPerPrim''' + requestPerTabelName + '''*)p3, sData, data, flag);
+#endif	
+	}
+}
+
+
+
+
+void CPerNe::ClearHistroicalPerTalbe()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	ForceFullSync(TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable), m_ulFullModId, 0);
+#endif
+}'''
+    return perToolsCppTemp
+
+def getPerChssModH(requestPerTabelName, requestPerTabelId):
+    return '''
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+typedef CPerNode<SPerPrim''' + requestPerTabelName + ''', SPerPrim''' + requestPerTabelName + ''', SPerHis''' + requestPerTabelName + '''> CPerNode''' + requestPerTabelName.upper() + ''';
+typedef CPerProcessBase<CPerNode''' + requestPerTabelName.upper() + ''', SPerPrim''' + requestPerTabelName + '''> CPerProcess''' + requestPerTabelName.upper() + ''';
+#endif
+
+
+
+class CPerChss : public CCardCmmUnit
+{
+protected:
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	CPerProcess''' + requestPerTabelName.upper() + '''* m_pPer''' + requestPerTabelName.upper() + ''';
+#endif
+};'''
+
+
+def getPerChssModCpp(requestPerTabelName, requestPerTabelId):
+    return '''
+char* g_PerFbName[] = 
+{
+	"LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerTabelId + '''",
+	"LPerFb_max = ''' + str(int(requestPerTabelId)+1) + '''"       //TODO:修改最大值
+};
+
+
+CPerChss::CPerChss(NSPMag::MODULEHANDLE hModule, int ChssPos, void *pCfg, Boolean ifSupportCfp,NSPScheduleImp::SCHHANDLE hSchDsMsg)
+:CCardCmmUnit(hModule, 
+				 0,
+				 0,
+				 0,
+				 0,
+				 false,
+				 "CPerChss")
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	PER_PROC_SET_NULL(''' + requestPerTabelName.upper() + ''');
+#endif
+}
+
+
+CPerChss::~CPerChss()
+{
+	//根据配置生成process对象
+	for (ULong i = 0; i < m_fbSupport.num; i++)
+	{
+		switch (m_fbSupport.fb[i])
+		{
+		case LPerFb_''' + requestPerTabelName.lower() + ''':
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+			PER_PROC_DELETE(''' + requestPerTabelName.upper() + ''');
+#endif
+			break;
+		}
+	}
+}
+
+
+INT CPerChss::Init(NSPTag hMem, NSPScheduleImp::SCHHANDLE hSch)
+{
+	//根据配置生成process对象
+	for (ULong i = 0; i < m_fbSupport.num; i++)
+	{
+		switch (m_fbSupport.fb[i])
+		{
+		case LPerFb_''' + requestPerTabelName.lower() + ''':
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+			PER_PROC_CREATE(''' + requestPerTabelName.upper() + ''', LPerFb_''' + requestPerTabelName.lower() + ''');
+#endif
+			break;
+		}
+	}
+}
+
+
+LDataType PerSupport[] = 
+{
+	LDataType_Per''' + requestPerTabelName + '''Cur
+};
+
+
+
+INT CPerChss::Cur2His(time_t StartTime, time_t EndTime, const Octet periodType)
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	PER_PROC_CUR2HIS(periodType, StartTime, EndTime, ''' + requestPerTabelName.upper() + ''');
+#endif
+}
+
+
+
+INT CPerChss::ClearCurPer(Long64 fid, Long type, const Octet period, String expression, Short perId)
+{
+	switch (type)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+		PER_PROC_CLR_CUR_DATA(''' + requestPerTabelName.upper() + ''', fid, period, perId);
+#endif
+		break;
+	}
+}
+
+
+void CPerChss::ClearCurPerAlarm(Long64 fid, Long type, const Octet period)
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	PER_PROC_CLEAR_ALM(''' + requestPerTabelName.upper() + ''');
+#endif
+}
+
+
+INT CPerChss::GetPrimData()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+		PER_PROC_GET_PRIM(''' + requestPerTabelName.upper() + ''');   //TODO:根据是否是5秒周期决定是否放到if (0 == m_count%5)中
+#endif
+}
+
+
+INT CPerChss::QueryCurPer(VTable& vTable, Long type, String expression)
+{
+	else if (TID_TO_TEID2(LDataType_PerPtpPacketCur, te_spectable)== type)
+	{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+		if (m_pPer''' + requestPerTabelName.upper() + ''')
+		{
+			CRecordSetPer''' + requestPerTabelName + '''Cur rec(TAG_CMM_PER);
+			ret = m_pPer''' + requestPerTabelName.upper() + '''->AddToCurTable(&rec, expression);
+			CopyVTable(vTable, *(rec.GetVTable()));
+		}
+#endif
+	}
+}
+
+
+
+void CPerChss::dbgOutput()
+{
+	for (i = 0; i < m_fbSupport.num; i++)
+	{
+		else if (LPerFb_''' + requestPerTabelName.lower() + ''' == m_fbSupport.fb[i])
+		{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+			if (m_pPer''' + requestPerTabelName.upper() + ''')
+			{
+				m_pPer''' + requestPerTabelName.upper() + '''->selfInfo(buf);
+			}
+#endif	
+		}
+	}
+}'''
+
+
+def getPerChssHelperCpp(requestPerTabelName):
+    return '''
+void  CPerMonCfg_Helper_chss::Dispatch(void *pArg, TDSData * data)
+{
+	for (ULong i = 0; i < m_IncChg.Length(); i++)
+	{
+		switch (m_IncChg[i].type)
+		{
+		case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+			if (o.m_pPer''' + requestPerTabelName.upper() + ''')
+				o.m_pPer''' + requestPerTabelName.upper() + '''->ProcNode(m_IncChg[i], ifRptHisData);
+#endif
+			break;
+		}
+	}
+}
+
+
+void  CPerMonItemCfg_Helper_chss::Dispatch(void *pArg, TDSData * data)
+{
+	for (ULong i = 0; i < m_IncChg.Length(); i++)
+	{
+		switch (m_IncChg[i].perType)
+		{
+		case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+			if (o.m_pPer''' + requestPerTabelName.upper() + ''')
+				o.m_pPer''' + requestPerTabelName.upper() + '''->ProcNode(m_IncChg[i], ifRptHisData);
+#endif
+			break;
+		}
+	}
+}'''
+
+
+def getNeSvcCfgLgCfgMngCpp(requestPerTabelName):
+    return '''
+void CNeSvcLgCardMng::sJobPerMonitorCheck(void* p1, void*p2)
+{
+	for (i=0,recPerMonitor.MoveFirst(); i<recPerMonitor.GetRows(); i++,recPerMonitor.MoveNext())
+	{
+		else if (Type == PerObjTypeList_''' + requestPerTabelName.lower() + ''')
+		{
+		    //TODO:以下两行改成根据实际FID获取Express
+			sscanf((const char*)Fid, "\\\\\\interface=%d", &IfIndex);
+			sprintf(Express, "IfIndex='\\\\\\interface=%d'", IfIndex);
+
+			if(CNeSvcDbTool::GetRecordRows(CRecordSet''' + requestPerTabelName + '''DSCfg::GetTableName(), Express, LDcDataView_config) > 0)    //TODO：需要将"CRecordSet''' + requestPerTabelName + '''DSCfg"修改成实际对应的表
+				continue;
+		}
+	}
+}'''
+
+def getNeSvcCommDataMtnCpp(requestPerTabelName):
+    return'''
+INT CNeSvcDataType_PerMonitorCfg::Format_DataType(void* pTMsg, INT DT_POS, String FormatString)
+{
+	switch (p->type)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+		strcat(TypeStr, " PerObjTypeList_''' + requestPerTabelName.lower() + '''");
+		break;
+	}
+}
+
+
+INT CNeSvcDataType_PerMonitorItemCfg::Format_DataType(void* pTMsg, INT DT_POS, String FormatString)
+{
+	switch (p->perType)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+		strcat(TypeStr, " PerObjTypeList_''' + requestPerTabelName.lower() + '''");
+		break;
+	}
+}'''
+
+def getNeSvcCommDataDecomposeCpp(requestPerTabelName):
+    return '''
+INT CNeSvcCommData::GetSlotForSiglePerObj(Long SessionId, TMsgPerMonitorCfg cfg, Long& slot)
+{
+	switch (cfg.type)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+	{
+		//TODO:获取槽位号
+		slot = 获取到的槽位号，从1开始;
+		break;
+	}
+	}
+}'''
+
+def getNESvcCfgPerMonitorCfgCpp(requestPerTabelName):
+    outString = '''
+int Check(Long index, Long type, bool& support)
+{
+		if (type == PerObjTypeList_''' + requestPerTabelName.lower() + ''')
+		{
+			support = true;
+		}
+}'''
+    outString += '''
+
+
+
+INT CNeSvcCfg::TPerMonitorCfgOpHookBefore(const MDCOpData * data, void * p1, void * p2, void * p3)
+{
+	else if (PerObjTypeList_''' + requestPerTabelName.lower() + ''' == type)
+	{
+		//TODO:以下两行改成根据实际FID获取Express
+		sscanf((const char*)FidStr, "\\\\\\interface=%d", &index);
+		sprintf(Exp, "IfIndex='\\\\\\interface=%d'", index);
+
+		if(0 == CNeSvcDbTool::GetRecordRows(CRecordSet''' + requestPerTabelName + '''DSCfg::GetTableName(), Exp, LDcDataView_config))    //TODO：需要将"CRecordSet''' + requestPerTabelName + '''DSCfg"修改成实际对应的表
+		{
+			return LRet_objectNotExisted;
+		}
+	}
+}'''
+
+    outString += '''
+
+
+
+INT CNeSvcCfg::TPerMonitorCfgTryHook(const MDCOpData * data, void * p1, void * p2, void * p3)
+{
+			else if (PerObjTypeList_''' + requestPerTabelName.lower() + ''' == type)
+			{
+				//TODO:以下两行改成根据实际FID获取Express
+				sscanf((const char*)FidStr, "\\\\\\interface=%d", &index);
+				sprintf(Exp, "IfIndex='\\\\\\interface=%d'", index);
+
+				if(0 == CNeSvcDbTool::GetRecordRows(CRecordSet''' + requestPerTabelName + '''DSCfg::GetTableName(), Exp, LDcDataView_config))    //TODO：需要将"CRecordSet''' + requestPerTabelName + '''DSCfg"修改成实际对应的表
+				{
+					return LRet_objectNotExisted;
+				}
+			}
+}'''
+
+    return outString
+
 
 def getMtnCmdDcCpp(requestPerTabelName):
     return '''
@@ -394,6 +870,91 @@ void SPerPrim''' + requestPerTabelName + '''::MakeInfo( String dataBuf, Long len
 }
 #endif'''
 
+    return perToolsCppTemp
+
+
+def getPerToolsH(requestPerTabelName, requestPerNameList):
+    perToolsCppTemp = '''
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+#include "record_set_per''' + requestPerTabelName.lower() + '''cur.h"
+#include "record_set_per''' + requestPerTabelName.lower() + '''his.h"
+#endif
+
+
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+
+/////////////////////////////////////////////////////////////////////////
+//	''' + requestPerTabelName + ''' performance data define 
+/////////////////////////////////////////////////////////////////////////
+
+struct SPerPrim''' + requestPerTabelName + '''
+{'''
+
+    addStringTemp = ''
+    hasRate = False
+    for requestPerNameTemp in requestPerNameList:
+        perToolsCppTemp += '''
+	Long64 ''' + requestPerNameTemp + ''';'''
+        if (re.search(r'Rate$', requestPerNameTemp)):
+            hasRate = True
+            addStringTemp += '''
+	Long64 ''' + requestPerNameTemp + '''Array[10];'''
+
+    if (hasRate):
+        perToolsCppTemp += '''
+
+	int m_cur;
+'''
+        perToolsCppTemp += addStringTemp
+
+    for requestPerNameTemp in requestPerNameList:
+        perToolsCppTemp += '''
+	Boolean ''' + requestPerNameTemp + '''MonStat;'''
+
+    perToolsCppTemp +='''
+
+    SPerPrim''' + requestPerTabelName + '''();
+
+
+	void Init();
+
+	void InitItem(Short perId);
+
+	void Calc( SPerPrim''' + requestPerTabelName + '''& prim, Long* alm, Long& Cur, char* Cnt, Long& CurExt, char* CntExt, Long& feCur, char* feCnt, Long vel );
+
+	void Update(SPerPrim''' + requestPerTabelName + '''& newData);
+
+	void Cur2His(SPerPrim''' + requestPerTabelName + '''* pRec, const Octet period);
+
+	void AddToRecordSet( const String sFid, const Octet period, void* pRec);
+
+	void SetHisRec(void* pRec);
+
+	void CreateAnyData(Any& data);
+
+	void JudgeCrossThr(const Octet period, Long64 fid, MPerThrCfg* thr, SEQUENCE<MAlmChssV1>& alm);
+
+	void ClearCrossThrAlm(const Octet period, Long64 fid, SEQUENCE<MAlmChssV1>& alm);
+
+	void ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChssV1>& alm);
+
+	void MakeInfo(String dataBuf, Long len);
+
+	void SetPerItmMonCfg(Short perId,Boolean MonStat);
+	
+};
+
+
+struct SPerHis''' + requestPerTabelName + '''
+{
+	Long idx;
+	Boolean isNa;
+	Boolean isDefect;
+	time_t endTime;
+	SPerPrim''' + requestPerTabelName + ''' per;
+};
+#endif
+'''
     return perToolsCppTemp
 
 def getXXXWs():
