@@ -35,6 +35,10 @@ perChssModH = ''
 perNeModCpp = ''
 perNeModH = ''
 CMakeListsTxt = ''
+cliApiAlarmperCPP = ''
+cliApiAlarmperH = ''
+cliCmdMoncmmCpp = ''
+cliCmdSysCpp = ''
 
 def index(request):
     # request.POST
@@ -43,7 +47,8 @@ def index(request):
     global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis, neBase,\
         PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, perToolsH, toolFidCpp, MtnCmdDcCpp, \
         NESvcCfgPerMonitorCfgCpp, NeSvcCommDataDecomposeCpp, NeSvcCommDataMtnCpp, NeSvcCfgLgCfgMngCpp,\
-        perChssHelperCpp, perChssModCpp, perChssModH, perNeModCpp, perNeModH, CMakeListsTxt
+        perChssHelperCpp, perChssModCpp, perChssModH, perNeModCpp, perNeModH, CMakeListsTxt, cliApiAlarmperCPP,\
+        cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp
     requestPerList = []
     LPerId = ''
     PerIdUnit = ''
@@ -112,6 +117,10 @@ def index(request):
         perNeModCpp = getPerNeModCpp(requestPerTabelName, requestPerNameListTemp)
         perNeModH = getPerNeModH(requestPerTabelName)
         CMakeListsTxt = getCMakeListsTxt(requestPerTabelName)
+        cliApiAlarmperCPP = getCliApiAlarmperCPP(requestPerTabelName, requestPerNameListTemp)
+        cliApiAlarmperH = getCliApiAlarmperH(requestPerTabelName, requestPerNameListTemp)
+        cliCmdMoncmmCpp = getCliCmdMoncmmCpp(requestPerTabelName, requestPerNameListTemp)
+        cliCmdSysCpp = getCliCmdSysCpp(requestPerTabelName)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
@@ -128,7 +137,668 @@ def index(request):
                                           'perChssHelperCpp': perChssHelperCpp,
                                           'perChssModCpp': perChssModCpp, 'perChssModH': perChssModH,
                                           'perNeModCpp': perNeModCpp, 'perNeModH': perNeModH,
-                                          'CMakeListsTxt': CMakeListsTxt})
+                                          'CMakeListsTxt': CMakeListsTxt,
+                                          'cliApiAlarmperCPP': cliApiAlarmperCPP, 'cliApiAlarmperH': cliApiAlarmperH,
+                                          'cliCmdMoncmmCpp': cliCmdMoncmmCpp, 'cliCmdSysCpp': cliCmdSysCpp})
+
+
+def getCliCmdSysCpp(requestPerTabelName):
+    return '''
+void PerObjTypeToStr(Long PerObjType, char out[])
+{
+	switch(PerObjType)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+		sprintf(out,"''' + requestPerTabelName.lower() + '''");
+		break;
+	}
+}'''
+
+def getCliCmdMoncmmCpp(requestPerTabelName, requestPerNameList):
+    outString = '''
+IdNameNode perTypeList[] = 
+{
+	IdNameNode(PerObjTypeList_''' + requestPerTabelName.lower() + ''',"''' + requestPerTabelName.lower() + '''"),
+};
+
+/////////////////////////////
+
+IdNameNode perIdNameList[] = 
+{
+	IdNameNode(LPerId_''' + requestPerNameList[0] + ''', "''' + requestPerNameList[0].lower() + '''"),  //ptppacket'''
+    for requestPerNameTemp in requestPerNameList[1:]:
+        outString += '''
+	IdNameNode(LPerId_''' + requestPerNameTemp + ''', "''' + requestPerNameTemp.lower() + '''"),'''
+
+    outString += '''
+};
+
+/////////////////////////////
+
+int show_counters (struct utons_cli *cli, int argc, char **argv)//TODO
+{
+	else if((argc > arcindex + 3) && (0 == strcmp(argv[arcindex + 3], "''' + requestPerTabelName.lower() + '''")))
+	{
+		SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur> per_''' + requestPerTabelName.lower() + '''_list;
+		SEQUENCE<per_''' + requestPerTabelName.lower() + '''_his> per_''' + requestPerTabelName.lower() + '''_his_list;
+		
+		if(isall)
+		{
+			sprintf(expression, "Fid='\\\\\\\\\\\\索引=%s'", argv[arcindex+1]);   //TODO:实现索引
+			per_counters_get(per_''' + requestPerTabelName.lower() + '''_list, expression);
+			per_his_counters_get(per_''' + requestPerTabelName.lower() + '''_his_list, expression);
+		}
+		else if(iscurrent)
+		{
+			sprintf(expression, "Fid='\\\\\\\\\\\\索引=%s' AND period=%d", argv[arcindex+1], period);   //TODO:实现索引
+			per_counters_get(per_''' + requestPerTabelName.lower() + '''_list, expression);			
+		}
+		else
+		{
+			//hisnum--;
+			sprintf(expression, "Fid='\\\\\\\\\\\\索引=%s' AND period=%d AND IdxNum=%d", argv[arcindex+1], period, hisnum);   //TODO:实现索引
+			per_his_counters_get(per_''' + requestPerTabelName.lower() + '''_his_list, expression);
+		}
+
+
+		//! 打印输出.
+		for (i = 0; i < per_''' + requestPerTabelName.lower() + '''_list.Length(); i++)
+		{		
+			dispString = per_''' + requestPerTabelName.lower() + '''_list[i].FormatInfo();
+			utons_cli_out(cli,"%s\\n", (const char*)dispString);
+			if(dispString)
+			{
+				NOICore::StringFree(dispString);
+				dispString = NULL;
+			}				
+		}
+
+		for (i = 0; i < per_''' + requestPerTabelName.lower() + '''_his_list.Length(); i++)
+		{		
+			dispString = per_''' + requestPerTabelName.lower() + '''_his_list[i].FormatInfo();
+			utons_cli_out(cli,"%s\\n", (const char*)dispString);
+			if(dispString)
+			{
+				NOICore::StringFree(dispString);
+				dispString = NULL;
+			}				
+		}
+
+		per_''' + requestPerTabelName.lower() + '''_list.ObjSetLength(0);
+		per_''' + requestPerTabelName.lower() + '''_his_list.ObjSetLength(0);
+	}
+}
+
+////////////////////////////////
+
+char *show_counters_help[] =
+{
+"索引",   //TODO:实现索引
+"索引值",   //TODO:实现索引值
+"Object type",
+"''' + requestPerTabelName.lower() + ''' performance",
+};
+
+////////////////////////////////
+struct utons_cli_element show_counters_cli =
+{
+	"(索引 <索引值> type ''' + requestPerTabelName.lower() + ''') |" //实现索引
+};
+
+//////////////////////////////////
+
+int set_performance_monitor (struct utons_cli *cli, int argc, char **argv)
+{
+		else if(0 == strcmp(argv[3], "''' + requestPerTabelName.lower() + '''"))
+		{
+			pertype = PerObjTypeList_''' + requestPerTabelName.lower() + ''';
+
+			//添加性能基元设置选项
+			if (0 == strcmp(argv[5], "all"))   
+			{
+				openAllItemFlag = 1;
+			}
+			
+			if (0 == strcmp(argv[5], "''' + requestPerNameList[0].lower() + '''"))
+			{
+			    perId = (Short)(IdNameNode::QueryId(argv[5],perIdNameList));
+			}'''
+    for requestPerNameTemp in requestPerNameList[1:]:
+        outString +='''
+			else if (0 == strcmp(argv[5], "''' + requestPerNameTemp.lower() + '''"))
+			{
+			    perId = (Short)(IdNameNode::QueryId(argv[5],perIdNameList));
+			}'''
+
+    outString += '''
+		}
+
+		if (0 == strcmp(argv[6], "period"))
+		{
+			if (0 == strcmp(argv[7], "all"))
+			{
+				per15minFlag = 1;
+				per24hFlag = 1;
+			}
+			else if (0 == strcmp(argv[7], "15min"))
+			{
+				per15minFlag = 1;
+
+			}
+			else if (0 == strcmp(argv[7], "24h"))
+			{
+				per24hFlag = 1;
+			}
+
+			if(0 == strcmp(argv[8], "on"))
+			{
+				ismonitor = 1;
+			}
+			else if(0 == strcmp(argv[8], "off"))
+			{
+				ismonitor = 0;
+			}
+		}
+		else if (0 == strcmp(argv[6], "random"))
+		{
+			randomPeriod = (Short)atoi(argv[7]);
+
+			if(0 == strcmp(argv[8], "on"))
+			{
+				isRandomMon = 1;
+			}
+			else if(0 == strcmp(argv[8], "off"))
+			{
+				isRandomMon = 0;
+			}
+		}
+		sprintf(fid, "\\\\\\\\\\\\索引=%s", argv[1]);
+		sprintf(expression,"Fid='%s' AND PerId= %d AND PerType = %d", (const char*)fid, perId, pertype);
+
+    //............
+
+	if (1 == openAllItemFlag)  //设置性能对象所有性能基元，即item设置参数选择了all
+	{
+			NSPASSERT(pertype >= PerObjTypeList_soh && pertype <= PerObjTypeList_''' + requestPerTabelName.lower() + ''');
+	}
+}
+
+/////////////////////////////////
+
+char *set_performance_monitor_help[] =
+{
+	"索引",		   //''' + requestPerTabelName.lower() + '''    //TODO:实现索引
+	"索引值",  //TODO:实现索引值
+	"Object type",
+	"Configure ptppacket performance",
+	"performance item",
+	"Configure all items of ptppacket",'''
+    for requestPerNameTemp in requestPerNameList:
+        outString +='''
+	"''' + requestPerNameTemp + '''",  //TODO:实现注释'''
+
+    outString += '''
+};
+
+//////////////////////////////////
+
+struct utons_cli_element set_performance_monitor_cli =
+{
+		"(索引 <1-255> type ''' + requestPerTabelName.lower() + '''	 item (all'''
+    for requestPerNameTemp in requestPerNameList:
+        outString +='|' + requestPerNameTemp.lower()
+
+    outString +='''))| "   //TODO:实现索引
+};
+
+///////////////////////////////
+int no_performance_monitor (struct utons_cli *cli, int argc, char **argv)
+{
+	int 索引 = 0; //TODO:实现索引
+	
+	//.............
+	
+	else if(0 == strcmp(argv[0], "索引")) //TODO:实现索引
+	{
+		portindex = atoi(argv[1]);
+
+		if(0 == strcmp(argv[3], "''' + requestPerTabelName.lower() + '''"))
+		{
+			pertype = PerObjTypeList_''' + requestPerTabelName.lower() + ''';
+
+			if (0 == strcmp(argv[5], "''' + requestPerNameList[0].lower() + '''"))
+			{
+			    perId = (Short)(IdNameNode::QueryId(argv[5],perIdNameList));
+			}'''
+    for requestPerNameTemp in requestPerNameList[1:]:
+        outString +='''
+			else if (0 == strcmp(argv[5], "''' + requestPerNameTemp.lower() + '''"))
+			{
+			    perId = (Short)(IdNameNode::QueryId(argv[5],perIdNameList));
+			}'''
+
+    outString += '''
+		}
+
+		sprintf(fid, "\\\\\\\\\\\\索引=%d", 索引);    //TODO:实现索引
+		sprintf(expression,"Fid='%s' AND PerId= %d AND PerType = %d", (const char*)fid, perId, pertype);
+	}
+}
+
+///////////////////////
+
+char *no_performance_monitor_help[] =
+{
+"索引",   //TODO:实现索引
+"索引值",  //TODO:实现索引值
+"Object type",
+"Configure ''' + requestPerTabelName.lower() + ''' performance",
+"performance item",
+"Configure all items of ptppacket",'''
+    for requestPerNameTemp in requestPerNameList:
+        outString += '''
+"''' + requestPerNameTemp + '''的注释",   //TODO:实现注释'''
+
+    outString += '''
+};
+
+//////////////////////////////////
+
+struct utons_cli_element no_performance_monitor_cli =
+{
+		"(索引 <索引范围> type ''' + requestPerTabelName.lower() + '''	 item (all'''
+
+    for requestPerNameTemp in requestPerNameList:
+        outString += '|' + requestPerNameTemp.lower()
+
+    outString += '''))| "
+};
+
+////////////////////////////////
+
+int clear_counters (struct utons_cli *cli, int argc, char **argv)
+{
+		else if(0 == strcmp(argv[i], "''' + requestPerTabelName.lower() + '''"))
+		{
+			rcd.AddNew();
+			if(0 == strcmp(argv[0], "all"))
+			{
+				rcd.SetExtFid("\\\\");
+				sprintf(mtncmd,"clrcurper:''' + requestPerTabelName.lower() + '''");
+			}
+			else if(0 == strcmp(argv[0], "15mins"))
+			{
+				sprintf(Fid,"\\\\\\\\\\\\索引=%s",argv[2]);   //TODO:实现索引
+				rcd.SetExtFid(Fid);
+				sprintf(mtncmd,"clrcurper:min15:''' + requestPerTabelName.lower() + '''"); 
+		
+			}
+			else if(0 == strcmp(argv[0], "24hrs"))
+			{
+				sprintf(Fid,"\\\\\\\\\\\\索引=%s",argv[2]);   //TODO:实现索引
+				rcd.SetExtFid(Fid);
+				sprintf(mtncmd,"clrcurper:hour24:''' + requestPerTabelName.lower() + '''");
+			}
+			else if(0 == strcmp(argv[0], "random"))
+			{
+				sprintf(Fid,"\\\\\\\\\\\\索引=%s",argv[2]);   //TODO:实现索引
+				rcd.SetExtFid(Fid);
+				sprintf(mtncmd,"clrcurper:randomPeriod:''' + requestPerTabelName.lower() + '''");
+			}
+
+			rcd.SetCommand(mtncmd);
+
+			cli_ret = dbMtnCmd.Add(rcd);
+		}
+	}
+}
+
+////////////////////////////////
+
+char *clear_counters_help[] =
+{
+	"''' + requestPerTabelName.lower() + ''' performance",
+	
+	//...........
+	
+	"索引",									 //''' + requestPerTabelName.lower() + '''  //TODO:实现索引
+	"索引值",      //实现索引值
+	"Object type",
+	"''' + requestPerTabelName.lower() + ''' performance",
+	"performance item",
+	"Configure all items of ''' + requestPerTabelName.lower() + '''",'''
+
+    for requestPerNameTemp in requestPerNameList:
+        outString +='''
+	"''' + requestPerNameTemp + '''的注释",   //TODO:实现注释'''
+
+    outString += '''
+	"15 minutes performance counters",
+	"24 hours performance counters",
+	"Random Period (1-15min) performance counters",
+}
+
+/////////////////////////
+
+struct utons_cli_element clear_counters_cli =
+{
+	"(all (.......|''' + requestPerTabelName.lower() + ''')) |"
+	
+	//..........
+	
+	"( (15mins | 24hrs | random) 索引 <索引范围>				type ''' + requestPerTabelName.lower() + '''	item (all'''
+
+    for requestPerNameTemp in requestPerNameList:
+        outString +=  '|' + requestPerNameTemp.lower()
+
+    outString += '''))| "   //TODO:实现索引
+}
+
+///////////////////////////
+
+INT BuildExpression(struct utons_cli *cli, char **argv, char expression[256])
+{
+	else if(0 == strcmp(argv[0], "索引")) //TODO:实现索引
+	{
+		sprintf(expression, "Fid='\\\\\\\\\\\\索引=%d' AND Type = %d", atoi(argv[1]), IdNameNode::QueryId(argv[3], perTypeList));   //TODO:实现索引
+	}
+}
+
+//////////////////////////////////
+void TranslateFid(const PerObjTypeList type, const String strFid, char result[], const SIZE_t size)
+{
+	switch (type)
+	{
+	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+		{
+			sscanf(strFid,"\\\\\\\\\\\\索引=%d",&itmp);   //TODO:实现索引
+			NSPSNPrintf(result, size, "\\n索引: %d", itmp);   //TODO:实现索引
+			break;
+		}
+	}
+}
+
+/////////////////////////
+
+
+char *show_performance_monitor_help[] =
+{
+	"索引",   //TODO:实现索引
+	"索引值",  //TODO:实现索引值
+	"Object type",
+	"Configure ''' + requestPerTabelName.lower() + ''' performance",
+}
+
+/////////////////////////////////////
+
+struct utons_cli_element show_performance_monitor_cli =
+{
+	  "(索引 <索引范围> type ''' + requestPerTabelName.lower() + ''') | " //TODO:实现索引
+}'''
+
+    return outString
+
+
+
+def getCliApiAlarmperH(requestPerTabelName, requestPerNameList):
+    outString = '''
+struct per_''' + requestPerTabelName.lower() + '''_cur
+{
+
+	String   Fid;			
+'''
+    for requestPerNameTemp in requestPerNameList:
+        outString += '''
+	Long64 ''' + requestPerNameTemp + ''';'''
+
+    outString += '''
+
+	per_''' + requestPerTabelName.lower() + '''_cur()
+	{
+
+		Fid=NULL;'''
+    for requestPerNameTemp in requestPerNameList:
+        outString += '''
+		''' + requestPerNameTemp + ''' = 0;'''
+
+    outString += '''
+	}
+
+	~per_''' + requestPerTabelName.lower() + '''_cur()
+	{
+		if (Fid)
+		{
+			NOICore::StringFree(Fid);
+			Fid = NULL;
+		}
+
+	}	
+
+	char* FormatInfo();	
+};
+
+
+
+INT per_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur>& per_''' + requestPerTabelName.lower() + '''_list, String expression=NULL);
+
+
+
+
+struct per_''' + requestPerTabelName.lower() + '''_his
+{
+
+	String Fid;
+	Long   Period;
+	Long IdxNum;
+	DateAndTime endTime;
+'''
+
+    for requestPerNameTemp in requestPerNameList:
+        if not(re.search(r'Rate$', requestPerNameTemp)):
+            outString += '''
+	Long64 ''' + requestPerNameTemp + ''';'''
+
+    outString += '''
+		
+	Octet slot;
+	Boolean IsNa;
+	Boolean IsDefect;
+	
+	per_''' + requestPerTabelName.lower() + '''_his()
+	{
+		Fid=NULL;		
+		Period = 0;	
+		IdxNum = 0;
+		memset((void *)&endTime, 0, sizeof(DateAndTime));
+'''
+    for requestPerNameTemp in requestPerNameList:
+        if not(re.search(r'Rate$', requestPerNameTemp)):
+            outString += '''
+		''' + requestPerNameTemp + ''' = 0;'''
+
+    outString += '''
+
+		slot = 0;
+		IsNa = false;
+		IsDefect = false;	
+	}
+
+	~per_''' + requestPerTabelName.lower() + '''_his()
+	{
+		if (Fid)
+		{
+			NOICore::StringFree(Fid);
+			Fid = NULL;
+		}
+
+	}	
+
+	char* FormatInfo();	
+};
+
+
+
+INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_his>& per_''' + requestPerTabelName.lower() + '''_list, String expression=NULL);
+'''
+
+    return outString
+
+
+def getCliApiAlarmperCPP(requestPerTabelName, requestPerNameList):
+    outString ='''
+#include "record_set_per''' + requestPerTabelName.lower() + '''cur.h"
+
+
+
+#include "record_set_per''' + requestPerTabelName.lower() + '''his.h"
+
+
+
+
+
+char* per_''' + requestPerTabelName.lower() + '''_cur::FormatInfo()
+{
+	char buffer[2000] = {0};
+
+	MY_SNPRINTF(buffer, sizeof(buffer),"%sFid:				 %s\\n",  buffer,(const char*)Fid);'''
+
+    for requestPerNameTemp in requestPerNameList:
+        outString +='''
+	MY_SNPRINTF(buffer, sizeof(buffer),"%s ''' + requestPerNameTemp + ''':      %Ld\\n", buffer, ''' + requestPerNameTemp + ''');'''
+
+    outString += '''
+
+	return NOICore::StringClone(TAG_CLI_AGENT, buffer);	
+}
+
+
+INT per_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur>& per_''' + requestPerTabelName.lower() + '''_list, String expression)
+{
+	CRecordSetPer''' + requestPerTabelName + '''Cur	recSet(TAG_CLI_AGENT);
+	CDbSetPer''' + requestPerTabelName + '''Cur     	DbSet(TAG_CLI_AGENT, 0, 1);
+
+	if (NULL != expression)
+	{
+		DbSet.Query("*", expression, recSet);
+	}
+	else
+	{
+		DbSet.Query("*", "", recSet);
+	}
+
+	int i = 0;
+
+	Long IfIndex = 0;
+	CBString DbStr;
+	char buffer[500] ={0};
+	int DbLen = recSet.GetRows();
+	per_''' + requestPerTabelName.lower() + '''_list.Construct(TAG_CLI_AGENT);
+	per_''' + requestPerTabelName.lower() + '''_list.ObjSetLength(DbLen);
+
+	for (recSet.MoveFirst();
+		i < DbLen; 
+		i++, recSet.MoveNext())
+	{'''
+    for requestPerNameTemp in requestPerNameList:
+        outString +='''
+		recSet.Get''' + requestPerNameTemp + '''(per_''' + requestPerTabelName.lower() + '''_list[i].''' + requestPerNameTemp + ''');'''
+
+    outString += '''
+		recSet.GetFid(DbStr);
+				
+		sscanf((const char*)DbStr, "\\\\\\\\\\\\portindex=%d", &IfIndex);
+		sprintf(buffer, "portindex=%d", IfIndex);
+
+
+		per_''' + requestPerTabelName.lower() + '''_list[i].Fid = NOICore::StringClone(TAG_CLI_AGENT, buffer);	
+	}
+
+	return LRet_success;
+};
+
+
+
+
+
+
+
+char* per_''' + requestPerTabelName.lower() + '''_his::FormatInfo()
+{
+	char buffer[2000] = {0};
+	
+	MY_SNPRINTF(buffer, sizeof(buffer),"%s Fid:                  %s\\n",  buffer, (const char*)Fid); 
+	MY_SNPRINTF(buffer, sizeof(buffer),"%s Index Number:         %d\\n", buffer, IdxNum);
+	MY_SNPRINTF(buffer, sizeof(buffer),"%s End Time:             %04d-%02d-%02d,%02d:%02d:%02d\\n",  buffer, 
+		endTime.wYear,endTime.byMonth,endTime.byDay,endTime.byHour,endTime.byMinute,endTime.bySecond);'''
+
+    for requestPerNameTemp in requestPerNameList:
+        if not(re.search(r'Rate$', requestPerNameTemp)):
+            outString +='''
+	MY_SNPRINTF(buffer, sizeof(buffer),"%s ''' + requestPerNameTemp + ''':      %Ld\\n", buffer, ''' + requestPerNameTemp + ''');'''
+
+    outString += '''
+
+	return NOICore::StringClone(TAG_CLI_AGENT, buffer);
+}
+
+
+INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_his>& per_''' + requestPerTabelName.lower() + '''_list, String expression)
+{
+	CRecordSetPer''' + requestPerTabelName + '''His	recSet(TAG_CLI_AGENT);
+	CDbSetPer''' + requestPerTabelName + '''His     	DbSet(TAG_CLI_AGENT, 0, 1);
+
+	if (NULL != expression)
+	{
+		DbSet.Query("*", expression, recSet);
+	}
+	else
+	{
+		DbSet.Query("*", "", recSet);
+	}
+
+	int i = 0;
+
+	Long IfIndex = 0;
+	CBString DbStr;
+	char buffer[500] ={0};
+	int DbLen = recSet.GetRows();
+	per_''' + requestPerTabelName.lower() + '''_list.Construct(TAG_CLI_AGENT);
+	per_''' + requestPerTabelName.lower() + '''_list.ObjSetLength(DbLen);
+
+	for (recSet.MoveFirst();
+		i < DbLen;
+		i++, recSet.MoveNext())
+	{
+		recSet.GetPeriod(per_''' + requestPerTabelName.lower() + '''_list[i].Period);
+		recSet.GetIdxNum(per_''' + requestPerTabelName.lower() + '''_list[i].IdxNum);
+		per_''' + requestPerTabelName.lower() + '''_list[i].IdxNum++;
+		recSet.GetEndTime(per_''' + requestPerTabelName.lower() + '''_list[i].endTime);
+'''
+    for requestPerNameTemp in requestPerNameList:
+        if not(re.search(r'Rate$', requestPerNameTemp)):
+            outString += '''
+		recSet.Get''' + requestPerNameTemp + '''(per_''' + requestPerTabelName.lower() + '''_list[i].''' + requestPerNameTemp + ''');'''
+
+    outString += '''
+		recSet.GetEndTime(per_''' + requestPerTabelName.lower() + '''_list[i].endTime);
+		recSet.GetIdxNum(per_''' + requestPerTabelName.lower() + '''_list[i].IdxNum);
+		recSet.GetSlot(per_''' + requestPerTabelName.lower() + '''_list[i].slot);
+		recSet.GetIsDefect(per_''' + requestPerTabelName.lower() + '''_list[i].IsDefect);
+		recSet.GetIsNa(per_''' + requestPerTabelName.lower() + '''_list[i].IsNa);
+		
+		recSet.GetFid(DbStr);
+
+		sscanf((const char*)DbStr, "\\\\\\\\\\\\portindex=%d", &IfIndex);
+		sprintf(buffer, "portindex=%d", IfIndex);
+
+		per_ptppacket_list[i].Fid = NOICore::StringClone(TAG_CLI_AGENT, buffer);
+	}
+
+	return LRet_success;
+};'''
+
+    return outString
+
 
 def getCMakeListsTxt(requestPerTabelName):
     return '''
@@ -167,7 +837,7 @@ public:
 
 
 def getPerNeModCpp(requestPerTabelName, requestPerNameList):
-    perToolsCppTemp =  '''
+    outString =  '''
 CPerNe::CPerNe(const NSPMag::MODULEHANDLE hm, void* pCfg)
 {
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
@@ -244,10 +914,10 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''*)pHis->data.ParamOut();'''
 
     for requestPerNameTemp in requestPerNameList:
-        perToolsCppTemp += '''
+        outString += '''
 		EXPORT_DATA_NEW(pData''' + requestPerTabelName + ''', ''' + requestPerNameTemp + ''', llTemp, period, pNode);'''
 
-    perToolsCppTemp += '''
+    outString += '''
 		break;
 	}
 }
@@ -275,7 +945,7 @@ void CPerNe::ClearHistroicalPerTalbe()
 	ForceFullSync(TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable), m_ulFullModId, 0);
 #endif
 }'''
-    return perToolsCppTemp
+    return outString
 
 def getPerChssModH(requestPerTabelName, requestPerTabelId):
     return '''
@@ -619,16 +1289,16 @@ extern INT CvtFid2Long64ToStr(const Long64 llFid, const PerObjTypeList type, Str
 }'''
 
 def getPerToolsCpp(requestPerTabelName, requestPerTabelId, requestPerNameList):
-    perToolsCppTemp = '''
+    outString = '''
 const Short perIdList[][MAX_PRIM_COUNT] = 
 {
 	{'''
 
     for requestPerNameTemp in requestPerNameList:
-        perToolsCppTemp += '''
+        outString += '''
 		LPerId_''' + requestPerNameTemp + ''','''
 
-    perToolsCppTemp += '''
+    outString += '''
 		LPerId_DefaultID
 	},  //''' + requestPerTabelName.lower() + '''     PerObjTypeList_''' + requestPerTabelName.lower() + ''' = ''' + requestPerTabelId + '''
 };
@@ -636,7 +1306,7 @@ const Short perIdList[][MAX_PRIM_COUNT] =
 
 
 '''
-    perToolsCppTemp +='''
+    outString +='''
 const PER_FB_INFO_ITEM perFbInfoTable[LPerFb_max] = 
 {
 	{
@@ -649,7 +1319,7 @@ const PER_FB_INFO_ITEM perFbInfoTable[LPerFb_max] =
 
 
 '''
-    perToolsCppTemp += '''
+    outString += '''
 INT PerUtility::PerObjType2FidType( const PerObjTypeList objType, LFidType& fidType )
 {
 	switch (objType)
@@ -663,7 +1333,7 @@ INT PerUtility::PerObjType2FidType( const PerObjTypeList objType, LFidType& fidT
 
 
 '''
-    perToolsCppTemp += '''
+    outString += '''
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 /***********************************************************/
 /* ''' + requestPerTabelName + ''' performance性能                               */
@@ -685,12 +1355,12 @@ void SPerPrim''' + requestPerTabelName + '''::InitItem(Short perId)
 	{'''
 
     for requestPerNameTemp in requestPerNameList:
-        perToolsCppTemp += '''
+        outString += '''
 	case LPerId_''' + requestPerNameTemp + ''':
 		''' + requestPerNameTemp + ''' = 0;
 		break;'''
 
-    perToolsCppTemp += '''
+    outString += '''
 	default:
 		break;
 	}
@@ -722,23 +1392,23 @@ void SPerPrim''' + requestPerTabelName + '''::Update( SPerPrim''' + requestPerTa
         else:
             addStringTemp = '''
 	PER_PRIM_ADD_NEW(''' + requestPerNameTemp + ''');'''
-        perToolsCppTemp += addStringTemp
+        outString += addStringTemp
 
     if(hasRate):
-        perToolsCppTemp += '''
+        outString += '''
 	m_cur = (++m_cur)%10;'''
 
-    perToolsCppTemp += '''
+    outString += '''
 }
 
 void SPerPrim''' + requestPerTabelName + '''::Cur2His( SPerPrimPtpPacket* pRec, const Octet period )
 {'''
     for requestPerNameTemp in requestPerNameList:
         if not(re.search(r'Rate$', requestPerNameTemp)):
-            perToolsCppTemp += '''
+            outString += '''
 	PER_PRIM_CUR2HIS_DEFECT64_NEW(pRec, ''' + requestPerNameTemp + ''');'''
 
-    perToolsCppTemp +='''
+    outString +='''
 }
 
 void SPerPrim''' + requestPerTabelName + '''::SetPerItmMonCfg(Short perId,Boolean MonStat)
@@ -747,12 +1417,12 @@ void SPerPrim''' + requestPerTabelName + '''::SetPerItmMonCfg(Short perId,Boolea
 	{'''
 
     for requestPerNameTemp in requestPerNameList:
-        perToolsCppTemp +='''
+        outString +='''
 	case LPerId_''' + requestPerNameTemp + ''':
 		''' + requestPerNameTemp + '''MonStat = MonStat;
 		break;'''
 
-    perToolsCppTemp +='''
+    outString +='''
 	default:
 		break;
 	}
@@ -781,18 +1451,18 @@ void SPerPrim''' + requestPerTabelName + '''::AddToRecordSet( const String sFid,
 		''' + requestPerNameTemp + ''' = getRate(''' + requestPerNameTemp + '''Array, 10);
 		PER_PRIM_SET_REC_NEW(pRow, ''' + requestPerNameTemp + ''');'''
         else:
-            perToolsCppTemp +='''
+            outString +='''
 	PER_PRIM_SET_REC_NEW(pRow, ''' + requestPerNameTemp + ''');'''
 
     if (hasRate):
-        perToolsCppTemp += '''
+        outString += '''
 
 	if (PerPeriodList_Min15 == period)
 	{
         ''' + addRateStringTemp + '''
 	}'''
 
-    perToolsCppTemp += '''
+    outString += '''
 
 	pRow->Setperiod(period);
 #endif
@@ -807,10 +1477,10 @@ void SPerPrim''' + requestPerTabelName + '''::SetHisRec( void* pRec )
 
     for requestPerNameTemp in requestPerNameList:
         if not (re.search(r'Rate$', requestPerNameTemp)):
-            perToolsCppTemp +='''
+            outString +='''
 	PER_PRIM_SET_REC(pRow, ''' + requestPerNameTemp + ''');'''
 
-    perToolsCppTemp += '''
+    outString += '''
 
 #endif
 }
@@ -822,14 +1492,14 @@ void SPerPrim''' + requestPerTabelName + '''::CreateAnyData( Any& data )
 
     for requestPerNameTemp in requestPerNameList:
         if not (re.search(r'Rate$', requestPerNameTemp)):
-            perToolsCppTemp += '''
+            outString += '''
 	PER_VALUE_SET(per, ''' + requestPerNameTemp + ''');'''
 
-    perToolsCppTemp += '''
+    outString += '''
 	data.Insert(TID_TO_TEID(TID_MPer''' + requestPerTabelName + '''), &per, TAG_CMM_PER);
 }
 
-void SPerPrim''' + requestPerTabelName + '''::JudgeCrossThr( const Octet period, Long64 fid, MPerThr* thr, SEQUENCE<MAlmChssV1>& alm )
+void SPerPrim''' + requestPerTabelName + '''::JudgeCrossThr( const Octet period, Long64 fid, MPerThr* thr, SEQUENCE<MAlmChss>& alm )
 {
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(fid);
@@ -837,14 +1507,14 @@ void SPerPrim''' + requestPerTabelName + '''::JudgeCrossThr( const Octet period,
 	NSP_TEMP_UNUSED_ARG(alm);
 }
 
-void SPerPrim''' + requestPerTabelName + '''::ClearCrossThrAlm( const Octet period, Long64 fid, SEQUENCE<MAlmChssV1>& alm )
+void SPerPrim''' + requestPerTabelName + '''::ClearCrossThrAlm( const Octet period, Long64 fid, SEQUENCE<MAlmChss>& alm )
 {
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(fid);
 	NSP_TEMP_UNUSED_ARG(alm);
 }
 
-void SPerPrim''' + requestPerTabelName + '''::ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChssV1>& alm)
+void SPerPrim''' + requestPerTabelName + '''::ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChss>& alm)
 {
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(fid);
@@ -863,18 +1533,18 @@ void SPerPrim''' + requestPerTabelName + '''::MakeInfo( String dataBuf, Long len
 
     for requestPerNameTemp in requestPerNameList:
         if not (re.search(r'Rate$', requestPerNameTemp)):
-            perToolsCppTemp += '''
+            outString += '''
 	PER_PRIM_INFO(''' + requestPerNameTemp + ''');'''
 
-    perToolsCppTemp += '''
+    outString += '''
 }
 #endif'''
 
-    return perToolsCppTemp
+    return outString
 
 
 def getPerToolsH(requestPerTabelName, requestPerNameList):
-    perToolsCppTemp = '''
+    outString = '''
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 #include "record_set_per''' + requestPerTabelName.lower() + '''cur.h"
 #include "record_set_per''' + requestPerTabelName.lower() + '''his.h"
@@ -893,7 +1563,7 @@ struct SPerPrim''' + requestPerTabelName + '''
     addStringTemp = ''
     hasRate = False
     for requestPerNameTemp in requestPerNameList:
-        perToolsCppTemp += '''
+        outString += '''
 	Long64 ''' + requestPerNameTemp + ''';'''
         if (re.search(r'Rate$', requestPerNameTemp)):
             hasRate = True
@@ -901,17 +1571,17 @@ struct SPerPrim''' + requestPerTabelName + '''
 	Long64 ''' + requestPerNameTemp + '''Array[10];'''
 
     if (hasRate):
-        perToolsCppTemp += '''
+        outString += '''
 
 	int m_cur;
 '''
-        perToolsCppTemp += addStringTemp
+        outString += addStringTemp
 
     for requestPerNameTemp in requestPerNameList:
-        perToolsCppTemp += '''
+        outString += '''
 	Boolean ''' + requestPerNameTemp + '''MonStat;'''
 
-    perToolsCppTemp +='''
+    outString +='''
 
     SPerPrim''' + requestPerTabelName + '''();
 
@@ -932,11 +1602,11 @@ struct SPerPrim''' + requestPerTabelName + '''
 
 	void CreateAnyData(Any& data);
 
-	void JudgeCrossThr(const Octet period, Long64 fid, MPerThrCfg* thr, SEQUENCE<MAlmChssV1>& alm);
+	void JudgeCrossThr(const Octet period, Long64 fid, MPerThrCfg* thr, SEQUENCE<MAlmChss>& alm);
 
-	void ClearCrossThrAlm(const Octet period, Long64 fid, SEQUENCE<MAlmChssV1>& alm);
+	void ClearCrossThrAlm(const Octet period, Long64 fid, SEQUENCE<MAlmChss>& alm);
 
-	void ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChssV1>& alm);
+	void ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChss>& alm);
 
 	void MakeInfo(String dataBuf, Long len);
 
@@ -955,7 +1625,7 @@ struct SPerHis''' + requestPerTabelName + '''
 };
 #endif
 '''
-    return perToolsCppTemp
+    return outString
 
 def getXXXWs():
     global PerXXXCur
