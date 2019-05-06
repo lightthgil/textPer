@@ -175,7 +175,7 @@ IdNameNode perIdNameList[] =
 
 /////////////////////////////
 
-int show_counters (struct utons_cli *cli, int argc, char **argv)//TODO
+int show_counters (struct utons_cli *cli, int argc, char **argv)
 {
 	else if((argc > arcindex + 3) && (0 == strcmp(argv[arcindex + 3], "''' + requestPerTabelName.lower() + '''")))
 	{
@@ -249,6 +249,8 @@ struct utons_cli_element show_counters_cli =
 
 int set_performance_monitor (struct utons_cli *cli, int argc, char **argv)
 {
+	else if(0 == strcmp(argv[0], "索引"))
+	{
 		else if(0 == strcmp(argv[3], "''' + requestPerTabelName.lower() + '''"))
 		{
 			pertype = PerObjTypeList_''' + requestPerTabelName.lower() + ''';
@@ -314,6 +316,7 @@ int set_performance_monitor (struct utons_cli *cli, int argc, char **argv)
 		}
 		sprintf(fid, "\\\\\\\\\\\\索引=%s", argv[1]);
 		sprintf(expression,"Fid='%s' AND PerId= %d AND PerType = %d", (const char*)fid, perId, pertype);
+	}
 
     //............
 
@@ -344,7 +347,7 @@ char *set_performance_monitor_help[] =
 
 struct utons_cli_element set_performance_monitor_cli =
 {
-		"(索引 <1-255> type ''' + requestPerTabelName.lower() + '''	 item (all'''
+		"(索引 <1-255> type ''' + requestPerTabelName.lower() + ''' item (all'''
     for requestPerNameTemp in requestPerNameList:
         outString +='|' + requestPerNameTemp.lower()
 
@@ -360,11 +363,17 @@ int no_performance_monitor (struct utons_cli *cli, int argc, char **argv)
 	
 	else if(0 == strcmp(argv[0], "索引")) //TODO:实现索引
 	{
-		portindex = atoi(argv[1]);
+		索引 = atoi(argv[1]);   //TODO:实现索引
 
-		if(0 == strcmp(argv[3], "''' + requestPerTabelName.lower() + '''"))
+		else if(0 == strcmp(argv[3], "''' + requestPerTabelName.lower() + '''"))
 		{
 			pertype = PerObjTypeList_''' + requestPerTabelName.lower() + ''';
+
+			//添加性能基元设置选项
+			if (0 == strcmp(argv[5], "all"))
+			{
+				openAllItemFlag = 1;
+			}
 
 			if (0 == strcmp(argv[5], "''' + requestPerNameList[0].lower() + '''"))
 			{
@@ -389,7 +398,7 @@ int no_performance_monitor (struct utons_cli *cli, int argc, char **argv)
 
 char *no_performance_monitor_help[] =
 {
-"索引",   //TODO:实现索引
+"索引",   //''' + requestPerTabelName.lower() + '''   //TODO:实现索引
 "索引值",  //TODO:实现索引值
 "Object type",
 "Configure ''' + requestPerTabelName.lower() + ''' performance",
@@ -406,7 +415,7 @@ char *no_performance_monitor_help[] =
 
 struct utons_cli_element no_performance_monitor_cli =
 {
-		"(索引 <索引范围> type ''' + requestPerTabelName.lower() + '''	 item (all'''
+		"(索引 <索引范围> type ''' + requestPerTabelName.lower() + ''' item (all'''
 
     for requestPerNameTemp in requestPerNameList:
         outString += '|' + requestPerNameTemp.lower()
@@ -450,7 +459,6 @@ int clear_counters (struct utons_cli *cli, int argc, char **argv)
 
 			cli_ret = dbMtnCmd.Add(rcd);
 		}
-	}
 }
 
 ////////////////////////////////
@@ -486,7 +494,7 @@ struct utons_cli_element clear_counters_cli =
 	
 	//..........
 	
-	"( (15mins | 24hrs | random) 索引 <索引范围>				type ''' + requestPerTabelName.lower() + '''	item (all'''
+	"( (15mins | 24hrs | random) 索引 <索引范围>	type ''' + requestPerTabelName.lower() + ''' item (all'''
 
     for requestPerNameTemp in requestPerNameList:
         outString +=  '|' + requestPerNameTemp.lower()
@@ -1147,8 +1155,8 @@ void CNeSvcLgCardMng::sJobPerMonitorCheck(void* p1, void*p2)
 		else if (Type == PerObjTypeList_''' + requestPerTabelName.lower() + ''')
 		{
 		    //TODO:以下两行改成根据实际FID获取Express
-			sscanf((const char*)Fid, "\\\\\\interface=%d", &IfIndex);
-			sprintf(Express, "IfIndex='\\\\\\interface=%d'", IfIndex);
+			sscanf((const char*)Fid, "\\\\\\\\\\\\interface=%d", &IfIndex);
+			sprintf(Express, "IfIndex='\\\\\\\\\\\\interface=%d'", IfIndex);
 
 			if(CNeSvcDbTool::GetRecordRows(CRecordSet''' + requestPerTabelName + '''DSCfg::GetTableName(), Express, LDcDataView_config) > 0)    //TODO：需要将"CRecordSet''' + requestPerTabelName + '''DSCfg"修改成实际对应的表
 				continue;
@@ -1212,13 +1220,17 @@ INT CNeSvcCfg::TPerMonitorCfgOpHookBefore(const MDCOpData * data, void * p1, voi
 	else if (PerObjTypeList_''' + requestPerTabelName.lower() + ''' == type)
 	{
 		//TODO:以下两行改成根据实际FID获取Express
-		sscanf((const char*)FidStr, "\\\\\\interface=%d", &index);
-		sprintf(Exp, "IfIndex='\\\\\\interface=%d'", index);
+		sscanf((const char*)FidStr, "\\\\\\\\\\\\interface=%d", &index);
+		sprintf(Exp, "IfIndex='\\\\\\\\\\\\interface=%d'", index);
 
 		if(0 == CNeSvcDbTool::GetRecordRows(CRecordSet''' + requestPerTabelName + '''DSCfg::GetTableName(), Exp, LDcDataView_config))    //TODO：需要将"CRecordSet''' + requestPerTabelName + '''DSCfg"修改成实际对应的表
 		{
 			return LRet_objectNotExisted;
 		}
+
+		//给interface以及chn分配16k以后的下标
+		index = 16*1024 + CreateStorageIndex(index);
+
 	}
 }'''
 
@@ -1231,8 +1243,8 @@ INT CNeSvcCfg::TPerMonitorCfgTryHook(const MDCOpData * data, void * p1, void * p
 			else if (PerObjTypeList_''' + requestPerTabelName.lower() + ''' == type)
 			{
 				//TODO:以下两行改成根据实际FID获取Express
-				sscanf((const char*)FidStr, "\\\\\\interface=%d", &index);
-				sprintf(Exp, "IfIndex='\\\\\\interface=%d'", index);
+				sscanf((const char*)FidStr, "\\\\\\\\\\\\interface=%d", &index);
+				sprintf(Exp, "IfIndex='\\\\\\\\\\\\interface=%d'", index);
 
 				if(0 == CNeSvcDbTool::GetRecordRows(CRecordSet''' + requestPerTabelName + '''DSCfg::GetTableName(), Exp, LDcDataView_config))    //TODO：需要将"CRecordSet''' + requestPerTabelName + '''DSCfg"修改成实际对应的表
 				{
