@@ -39,6 +39,12 @@ cliApiAlarmperCPP = ''
 cliApiAlarmperH = ''
 cliCmdMoncmmCpp = ''
 cliCmdSysCpp = ''
+cardOpxxHwCpp = ''
+cardOpxxHwH = ''
+cardEthernetPhyCpp = ''
+
+def subStrRate(iterable):
+	return not re.search(r'Rate$', iterable)
 
 def index(request):
     # request.POST
@@ -48,7 +54,7 @@ def index(request):
         PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, perToolsH, toolFidCpp, MtnCmdDcCpp, \
         NESvcCfgPerMonitorCfgCpp, NeSvcCommDataDecomposeCpp, NeSvcCommDataMtnCpp, NeSvcCfgLgCfgMngCpp,\
         perChssHelperCpp, perChssModCpp, perChssModH, perNeModCpp, perNeModH, CMakeListsTxt, cliApiAlarmperCPP,\
-        cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp
+        cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp, cardOpxxHwCpp, cardOpxxHwH, cardEthernetPhyCpp
     requestPerList = []
     LPerId = ''
     PerIdUnit = ''
@@ -121,6 +127,9 @@ def index(request):
         cliApiAlarmperH = getCliApiAlarmperH(requestPerTabelName, requestPerNameListTemp)
         cliCmdMoncmmCpp = getCliCmdMoncmmCpp(requestPerTabelName, requestPerNameListTemp)
         cliCmdSysCpp = getCliCmdSysCpp(requestPerTabelName)
+        cardOpxxHwCpp = getCardOpxxHwCpp(requestPerTabelName, requestPerNameListTemp)
+        cardOpxxHwH = getCardOpxxHwH(requestPerTabelName, requestPerNameListTemp)
+        cardEthernetPhyCpp = getCardEthernetPhyCpp(requestPerTabelName)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
@@ -139,8 +148,239 @@ def index(request):
                                           'perNeModCpp': perNeModCpp, 'perNeModH': perNeModH,
                                           'CMakeListsTxt': CMakeListsTxt,
                                           'cliApiAlarmperCPP': cliApiAlarmperCPP, 'cliApiAlarmperH': cliApiAlarmperH,
-                                          'cliCmdMoncmmCpp': cliCmdMoncmmCpp, 'cliCmdSysCpp': cliCmdSysCpp})
+                                          'cliCmdMoncmmCpp': cliCmdMoncmmCpp, 'cliCmdSysCpp': cliCmdSysCpp,
+                                          'cardOpxxHwCpp': cardOpxxHwCpp, 'cardOpxxHwH': cardOpxxHwH,
+                                          'cardEthernetPhyCpp': cardEthernetPhyCpp})
 
+
+def getCardEthernetPhyCpp(requestPerTabelName):
+    outString = '''
+void CPhyCardEth::InitSubModulePerCfg(SEQUENCE<INT> &perCfg)
+{
+	perCfg.SetLength(+1); 
+	
+	perCfg[+1] = LPerFb_''' + requestPerTabelName.lower() + ''';
+}
+'''
+    return outString
+
+def getCardOpxxHwH(requestPerTabelName, requestPerNameList):
+    requestPerNameList = filter(subStrRate, requestPerNameList)
+
+    outString = '''
+struct TCmmPer
+{
+	ULong Id;
+	Long64 Value;
+};
+
+struct T''' + requestPerTabelName + '''Per
+{'''
+    for requestPerNameTemp in requestPerNameList:
+        outString += '''
+	Long64 ''' + requestPerNameTemp + ''';'''
+    outString += '''
+};
+
+///////////
+
+class CCardHwOPXX : public CCardHw
+{
+public:
+	INT GetPerPrimIdData(UShort primId, SEQUENCE<TPer>& data, Long flag);
+
+	//''' + requestPerTabelName.lower() + ''' 性能
+	INT Init''' + requestPerTabelName + '''Per(Long fidType, UFid uFid, Long objType);
+
+	// ''' + requestPerTabelName.lower() + ''' 性能'''
+    for requestPerNameTemp in requestPerNameList:
+        outString += '''
+	INT Get''' + requestPerNameTemp + '''(TCmmPer & per);'''
+
+    outString += '''
+
+	//.......
+
+public:
+	//''' + requestPerTabelName.lower() + ''' 性能
+	SEQUENCE<T''' + requestPerTabelName + '''Per> m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis;
+};'''
+
+    return outString
+
+def getCardOpxxHwCpp(requestPerTabelName, requestPerNameList):
+    requestPerNameList = filter(subStrRate, requestPerNameList)
+
+    outString = '''
+extern  UINT32   g_RecvPktCnt[k_NUM_IF][k_PKT_TYPE_NUM] ;
+extern  UINT32   g_SendPktCnt[k_NUM_IF][k_PKT_TYPE_NUM] ;
+
+extern  UINT32   g_Max_RestimeDelreq[k_NUM_IF];
+extern  UINT32   g_Max_RestimeSync[k_NUM_IF];
+extern  INT32   g_Max_PeerMPDel[k_NUM_IF];
+extern  INT32   g_Max_MeanPathDel[k_NUM_IF];
+extern  INT32   g_Max_OffsetFMst[k_NUM_IF];
+
+extern "C" int getLocalIdxforPer(INT portIndex);
+
+INT g_''' + requestPerTabelName + '''PerAllPrint = 0;
+INT g_''' + requestPerTabelName + '''PerPrimIdPrint = 0;
+
+typedef INT (CCardHwOPXX::*''' + requestPerTabelName + '''PerFunc)(TCmmPer & ''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''Per);
+
+struct S''' + requestPerTabelName + '''PerTbl
+{
+	UShort perIdx;          // 性能ID
+	''' + requestPerTabelName + '''PerFunc pFunc;     // 性能查询函数
+};
+
+S''' + requestPerTabelName + '''PerTbl g_a''' + requestPerTabelName + '''PerTab[] =
+{
+	// ''' + requestPerTabelName.lower() + ''' 性能'''
+
+    for requestPerNameTemp in requestPerNameList:
+        if not(re.search(r'Rate$', requestPerNameTemp)):
+            outString += '''
+	{LPerPrimId_''' + requestPerNameTemp + ''',        &CCardHwOPXX::Get''' + requestPerNameTemp + '''},'''
+
+    outString += '''
+};
+
+/////////////////////////
+
+CCardHwOPXX::CCardHwOPXX(NSPMag::MODULEHANDLE hModule,INT ShelfPos, INT ShelfType,INT ChssPos, INT ChssType)
+: CCardHw(hModule, ShelfPos,ShelfType, ChssPos, ChssType)
+{
+    m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis.Construct(m_hMem, k_NUM_IF);
+
+    if (m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis.SetLength(k_NUM_IF) != k_NUM_IF)
+    {
+        NSPLog::log(eth_log_id, NSPLog::L_ERROR, DEFAULT_LOG_RECORD_LEN, 
+				"m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis  Alloc Error!");
+    }
+	else
+	{
+		memset(&m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis[0], 0, sizeof(T''' + requestPerTabelName + '''Per) * k_NUM_IF);
+	}
+}
+
+//////////////////
+
+CCardHwOPXX::~CCardHwOPXX()
+{
+	m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis.SetLength(0);
+	m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis.~SEQUENCE();
+}
+
+///////////////////
+
+INT CCardHwOPXX::GetPerPrimIdData(UShort primId, SEQUENCE<TPer>& data, Long flag)
+{
+	//性能上报
+	NSP_UNUSED_ARG(flag);
+	TCmmPer per;
+	INT portindex = 0;
+	INT i = 0;
+	ULong j = 0;
+	ULong len = data.Length();
+	INT ret = LRet_success;
+
+	else if (primId >= LPerPrimId_''' + requestPerNameList[0] + ''' && primId <= LPerPrimId_''' + requestPerNameList[-1] + ''')
+	{
+		int pernum = COUNTOF(g_a''' + requestPerTabelName + '''PerTab);
+		for (i = 0; i < pernum; ++i)
+		{
+			if (primId == g_a''' + requestPerTabelName + '''PerTab[i].perIdx) // 找到待查的性能id
+			{
+				for (j = 0; j < len; ++j)
+				{
+					per.Id = getLocalIdxforPer(data[j].fid.''' + requestPerTabelName.lower() + '''Fid.portindex);
+
+					if (per.Id < k_NUM_IF) //port is based 0
+					{
+						ret = (this->*g_a''' + requestPerTabelName + '''PerTab[i].pFunc)(per);
+
+						if (LRet_success == ret)
+						{
+							data[j].value = per.Value;
+						}
+						else
+						{
+							data[j].value = 0;
+							data[j].flag = LRet_objectExisted;
+						}
+
+						if (g_''' + requestPerTabelName + '''PerAllPrint || (primId == g_''' + requestPerTabelName + '''PerPrimIdPrint))
+						{
+							ULong PerValue32L = per.Value & 0xFFFFFFFF;
+							ULong PerValue32H = (per.Value >> 32) & 0xFFFFFFFF;
+							printf("Get the PortIndex=%d PrimId=%d PerValue[H]=%u PerValue[L]=%u ret=%d\\n", per.Id, primId, PerValue32H, PerValue32L, ret);
+						}
+					}
+					else
+					{
+						data[j].value = 0;
+						data[j].flag = LRet_objectExisted;
+					}
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+////////////////
+
+////////////////''' + requestPerTabelName + ''' per////////////////////////////////////////
+INT CCardHwOPXX::Init''' + requestPerTabelName + '''Per(Long fidType, UFid uFid, Long objType)
+{
+	TCmmPer per;
+	//将对应的portindex清除
+	per.Id = getLocalIdxforPer(uFid.''' + requestPerTabelName.lower() + '''Fid.portindex);
+	if(per.Id < k_NUM_IF)
+	{
+		// ''' + requestPerTabelName.lower() + ''' 性能读一遍获取初始值'''
+    for requestPerNameTemp in requestPerNameList:
+        if not(re.search(r'Rate$', requestPerNameTemp)):
+            outString += '''
+		Get''' + requestPerNameTemp + '''(per);'''
+
+    outString += '''
+	}
+
+	return LRet_success;
+}
+
+
+// ''' + requestPerTabelName.lower() + ''' 性能'''
+    for requestPerNameTemp in requestPerNameList:
+        if not(re.search(r'Rate$', requestPerNameTemp)):
+            direction = 'Recv'
+            emunName = requestPerNameTemp.upper()
+            if (re.search(r'^Receive', requestPerNameTemp)):
+                direction = 'Recv'
+                emunName = re.sub(r'^Receive', '', requestPerNameTemp).upper()
+            elif(re.search(r'^Transmit', requestPerNameTemp)):
+                direction = 'Send'
+                emunName = re.sub(r'^Transmit', '', requestPerNameTemp).upper()
+            outString += '''
+INT CCardHwOPXX::Get''' + requestPerNameTemp + '''(TCmmPer & per)
+{
+	if(per.Id < k_NUM_IF)
+	{
+		per.Value = PerOverFlowProc(g_''' + direction + '''PktCnt[per.Id][e_MT_''' + emunName + '''], m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis[per.Id].''' + requestPerNameTemp + ''', WIDE_32);
+		m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis[per.Id].''' + requestPerNameTemp + ''' = g_''' + direction + '''PktCnt[per.Id][e_MT_''' + emunName + '''];
+	}
+	else
+	{
+		per.Value = 0;
+	}
+
+	return LRet_success;
+}
+'''
+    return outString
 
 def getCliCmdSysCpp(requestPerTabelName):
     return '''
@@ -165,7 +405,7 @@ IdNameNode perTypeList[] =
 
 IdNameNode perIdNameList[] = 
 {
-	IdNameNode(LPerId_''' + requestPerNameList[0] + ''', "''' + requestPerNameList[0].lower() + '''"),  //ptppacket'''
+	IdNameNode(LPerId_''' + requestPerNameList[0] + ''', "''' + requestPerNameList[0].lower() + '''"),  //''' + requestPerTabelName.lower() + ''''''
     for requestPerNameTemp in requestPerNameList[1:]:
         outString += '''
 	IdNameNode(LPerId_''' + requestPerNameTemp + ''', "''' + requestPerNameTemp.lower() + '''"),'''
@@ -333,9 +573,9 @@ char *set_performance_monitor_help[] =
 	"索引",		   //''' + requestPerTabelName.lower() + '''    //TODO:实现索引
 	"索引值",  //TODO:实现索引值
 	"Object type",
-	"Configure ptppacket performance",
+	"Configure ''' + requestPerTabelName.lower() + ''' performance",
 	"performance item",
-	"Configure all items of ptppacket",'''
+	"Configure all items of ''' + requestPerTabelName.lower() + '''",'''
     for requestPerNameTemp in requestPerNameList:
         outString +='''
 	"''' + requestPerNameTemp + '''",  //TODO:实现注释'''
@@ -403,7 +643,7 @@ char *no_performance_monitor_help[] =
 "Object type",
 "Configure ''' + requestPerTabelName.lower() + ''' performance",
 "performance item",
-"Configure all items of ptppacket",'''
+"Configure all items of ''' + requestPerTabelName.lower() + '''",'''
     for requestPerNameTemp in requestPerNameList:
         outString += '''
 "''' + requestPerNameTemp + '''的注释",   //TODO:实现注释'''
@@ -799,7 +1039,7 @@ INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_hi
 		sscanf((const char*)DbStr, "\\\\\\\\\\\\portindex=%d", &IfIndex);
 		sprintf(buffer, "portindex=%d", IfIndex);
 
-		per_ptppacket_list[i].Fid = NOICore::StringClone(TAG_CLI_AGENT, buffer);
+		per_''' + requestPerTabelName.lower() + '''_list[i].Fid = NOICore::StringClone(TAG_CLI_AGENT, buffer);
 	}
 
 	return LRet_success;
@@ -934,7 +1174,7 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 
 void CPerNe::ProcPerHisTable(SEQUENCE<MPerHistory>& data, const SEQUENCE<Long> & flag)
 {
-	//ptppacket
+	//''' + requestPerTabelName.lower() + '''
 	else if (PerObjTypeList_''' + requestPerTabelName.lower() + '''== data[i].type)
 	{
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
@@ -1078,7 +1318,7 @@ INT CPerChss::GetPrimData()
 
 INT CPerChss::QueryCurPer(VTable& vTable, Long type, String expression)
 {
-	else if (TID_TO_TEID2(LDataType_PerPtpPacketCur, te_spectable)== type)
+	else if (TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''Cur, te_spectable)== type)
 	{
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 		if (m_pPer''' + requestPerTabelName.upper() + ''')
@@ -1413,7 +1653,7 @@ void SPerPrim''' + requestPerTabelName + '''::Update( SPerPrim''' + requestPerTa
     outString += '''
 }
 
-void SPerPrim''' + requestPerTabelName + '''::Cur2His( SPerPrimPtpPacket* pRec, const Octet period )
+void SPerPrim''' + requestPerTabelName + '''::Cur2His( SPerPrim''' + requestPerTabelName + '''* pRec, const Octet period )
 {'''
     for requestPerNameTemp in requestPerNameList:
         if not(re.search(r'Rate$', requestPerNameTemp)):
@@ -1446,7 +1686,7 @@ void SPerPrim''' + requestPerTabelName + '''::AddToRecordSet( const String sFid,
 	NSP_TEMP_UNUSED_ARG(pRec);
 	NSP_TEMP_UNUSED_ARG(sFid);
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
-	CRecordSetPerPtpPacketCur* pRow = (CRecordSetPerPtpPacketCur*)pRec;
+	CRecordSetPer''' + requestPerTabelName + '''Cur* pRow = (CRecordSetPer''' + requestPerTabelName + '''Cur*)pRec;
 	pRow->AddNew();
 	if (sFid)
 	{

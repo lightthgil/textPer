@@ -14,9 +14,9 @@
             <input type="text" name="requestPerTabelId"/>
             <label>性能名称（可输入多个）</label>
             <input type="text" name="requestPerName"/>
-            <label>性能ID（可输入多个或范围）</label>
+            <label>性能ID(LPerId)（可输入多个或范围）</label>
             <input type="text" name="requestPerId"/>
-            <label>设备使用的性能ID（可输入多个或范围）</label>
+            <label>设备使用的性能ID（LPerPrimId）（可输入多个或范围）</label>
             <input type="text" name="requestPrimId"/>
             <input type="submit" value="提交"/>
         </form>
@@ -155,7 +155,18 @@
     <br>
     <textarea rows="10" cols="80">{{ cliCmdSysCpp }}</textarea>
     <br>
-
+    <label>card_opxx_hw.cpp (//TODO:opxx替换成实际单盘)</label>
+    <br>
+    <textarea rows="20" cols="80">{{ cardOpxxHwCpp }}</textarea>
+    <br>
+    <label>card_opxx_hw.h (//TODO:opxx替换成实际单盘)</label>
+    <br>
+    <textarea rows="20" cols="80">{{ cardOpxxHwH }}</textarea>
+    <br>
+    <label>card_ethernet_phy.cpp</label>
+    <br>
+    <textarea rows="7" cols="80">{{ cardEthernetPhyCpp }}</textarea>
+    <br>
 
 
     <script src="/static/js/jquery-1.12.4.js"></script>
