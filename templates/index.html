@@ -10,8 +10,10 @@
         <form action="/index/" method="post">{% csrf_token %}
             <label>表名</label>
             <input type="text" name="requestPerTabelName"/>
-            <label>表ID</label>
-            <input type="text" name="requestPerTabelId"/>
+            <label>PerObjTypeList 表ID</label>
+            <input type="text" name="requestPerObjTypeListId"/>
+            <label>LPerFb 表ID</label>
+            <input type="text" name="requestPerFbId"/>
             <label>性能名称（可输入多个）</label>
             <input type="text" name="requestPerName"/>
             <label>性能ID(LPerId)（可输入多个或范围）</label>
@@ -137,7 +139,7 @@
     <br>
     <label>CMakeLists.txt</label>
     <br>
-    <textarea rows="20" cols="80">{{ CMakeListsTxt }}</textarea>
+    <textarea rows="7" cols="80">{{ CMakeListsTxt }}</textarea>
     <br>
     <label>cli_api_alarmper.cpp</label>
     <br>

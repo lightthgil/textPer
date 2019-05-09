@@ -66,7 +66,8 @@ def index(request):
     if request.method == 'POST':
 
         requestPerTabelName = request.POST.get('requestPerTabelName', None)
-        requestPerTabelId = request.POST.get('requestPerTabelId', None)
+        requestPerObjTypeListId = request.POST.get('requestPerObjTypeListId', None)
+        requestPerFbId = request.POST.get('requestPerFbId', None)
         requestPerName = request.POST.get('requestPerName', None)
         requestPerId = request.POST.get('requestPerId', None)
         requestPrimId = request.POST.get('requestPrimId', None)
@@ -90,10 +91,10 @@ def index(request):
         setPerXXXCurStart(PerXXXCur, requestPerTabelName)
         setPerXXXHisStart(PerXXXHis, requestPerTabelName)
         neBase = getNeBaseOtrStart(requestPerTabelName)
-        PerObjTypeList = getPerObjTypeList(requestPerTabelName, requestPerTabelId)
+        PerObjTypeList = getPerObjTypeList(requestPerTabelName, requestPerObjTypeListId)
         DataTypeDef = getDataTypeDef()
         LDataType = getLDataType()
-        LPerFb = getLPerFb(requestPerTabelName, requestPerTabelId)
+        LPerFb = getLPerFb(requestPerTabelName, requestPerFbId)
         XXXWs = getXXXWs()
 
         for requestPerNameTemp, requestPerIdTemp, requestPrimIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp, requestPrimIdListTemp):
@@ -109,7 +110,7 @@ def index(request):
         setPerXXXCurEnd(PerXXXCur)
         setPerXXXHisEnd(PerXXXHis)
 
-        perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerTabelId, requestPerNameListTemp)
+        perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameListTemp)
         perToolsH = getPerToolsH(requestPerTabelName, requestPerNameListTemp)
         toolFidCpp = getToolFidCpp(requestPerTabelName)
         MtnCmdDcCpp = getMtnCmdDcCpp(requestPerTabelName)
@@ -118,8 +119,8 @@ def index(request):
         NeSvcCommDataMtnCpp = getNeSvcCommDataMtnCpp(requestPerTabelName)
         NeSvcCfgLgCfgMngCpp = getNeSvcCfgLgCfgMngCpp(requestPerTabelName)
         perChssHelperCpp = getPerChssHelperCpp(requestPerTabelName)
-        perChssModCpp = getPerChssModCpp(requestPerTabelName, requestPerTabelId)
-        perChssModH = getPerChssModH(requestPerTabelName, requestPerTabelId)
+        perChssModCpp = getPerChssModCpp(requestPerTabelName, requestPerFbId)
+        perChssModH = getPerChssModH(requestPerTabelName, requestPerObjTypeListId)
         perNeModCpp = getPerNeModCpp(requestPerTabelName, requestPerNameListTemp)
         perNeModH = getPerNeModH(requestPerTabelName)
         CMakeListsTxt = getCMakeListsTxt(requestPerTabelName)
@@ -1050,27 +1051,10 @@ INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_hi
 
 def getCMakeListsTxt(requestPerTabelName):
     return '''
-IF(LINUX) ADD_DEFINITIONS(
-    ADD_DEFINITIONS(
-			-DPER_FB_''' + requestPerTabelName.upper() + '''
-    )
-
-
-
-
-IF(VXWORKS)
-    ADD_DEFINITIONS(
-			-DPER_FB_''' + requestPerTabelName.upper() + '''
-    )
-
-
-
-
-IF(MSVC) # FOR WIN32
-    ADD_DEFINITIONS(
+ADD_DEFINITIONS(
+		//..........
 		-DPER_FB_''' + requestPerTabelName.upper() + '''
-   )
-    '''
+		) '''
 
 
 def getPerNeModH(requestPerTabelName):
@@ -1195,7 +1179,7 @@ void CPerNe::ClearHistroicalPerTalbe()
 }'''
     return outString
 
-def getPerChssModH(requestPerTabelName, requestPerTabelId):
+def getPerChssModH(requestPerTabelName, requestPerObjTypeListId):
     return '''
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 typedef CPerNode<SPerPrim''' + requestPerTabelName + ''', SPerPrim''' + requestPerTabelName + ''', SPerHis''' + requestPerTabelName + '''> CPerNode''' + requestPerTabelName.upper() + ''';
@@ -1213,12 +1197,12 @@ protected:
 };'''
 
 
-def getPerChssModCpp(requestPerTabelName, requestPerTabelId):
+def getPerChssModCpp(requestPerTabelName, requestPerFbId):
     return '''
 char* g_PerFbName[] = 
 {
-	"LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerTabelId + '''",
-	"LPerFb_max = ''' + str(int(requestPerTabelId)+1) + '''"       //TODO:修改最大值
+	"LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerFbId + '''",
+	"LPerFb_max = ''' + str(int(requestPerFbId) + 1) + '''"       //TODO:修改最大值
 };
 
 
@@ -1540,7 +1524,7 @@ extern INT CvtFid2Long64ToStr(const Long64 llFid, const PerObjTypeList type, Str
 	}
 }'''
 
-def getPerToolsCpp(requestPerTabelName, requestPerTabelId, requestPerNameList):
+def getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameList):
     outString = '''
 const Short perIdList[][MAX_PRIM_COUNT] = 
 {
@@ -1552,7 +1536,7 @@ const Short perIdList[][MAX_PRIM_COUNT] =
 
     outString += '''
 		LPerId_DefaultID
-	},  //''' + requestPerTabelName.lower() + '''     PerObjTypeList_''' + requestPerTabelName.lower() + ''' = ''' + requestPerTabelId + '''
+	},  //''' + requestPerTabelName.lower() + '''     PerObjTypeList_''' + requestPerTabelName.lower() + ''' = ''' + requestPerObjTypeListId + '''
 };
 
 
@@ -1565,7 +1549,7 @@ const PER_FB_INFO_ITEM perFbInfoTable[LPerFb_max] =
 		LPerId_''' + requestPerNameList[0] + ''', ''' + str(len(requestPerNameList)) + ''', 0,
  		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上本地检测的告警列表
  		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上远端缺陷的告警列表
-	},  //''' + requestPerTabelName.lower() + '''     LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerTabelId + '''
+	},  //''' + requestPerTabelName.lower() + '''     LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerFbId + '''
 };
 
 
@@ -1888,13 +1872,13 @@ def getXXXWs():
     '''
 
 
-def getLPerFb(requestPerTabelName, requestPerTabelId):
+def getLPerFb(requestPerTabelName, requestPerFbId):
     return '''
       <Any>
         <val teid="Any_Seq">
           <val>
             <Any>
-              <val teid="Short" val="''' + requestPerTabelId + '''"/>
+              <val teid="Short" val="''' + requestPerFbId + '''"/>
             </Any>
             <Any>
               <val teid="String" val="中文注释"/>
@@ -2000,13 +1984,13 @@ def getDataTypeDef():
     '''
 
 
-def getPerObjTypeList(requestPerTabelName, requestPerTabelId):
+def getPerObjTypeList(requestPerTabelName, requestPerObjTypeListId):
     return '''
         <Any>
           <val teid="Any_Seq">
             <val>
               <Any>
-                <val teid="Short" val="''' + requestPerTabelId + '''"/>
+                <val teid="Short" val="''' + requestPerObjTypeListId + '''"/>
               </Any>
               <Any>
                 <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
