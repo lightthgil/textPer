@@ -42,6 +42,7 @@ cliCmdSysCpp = ''
 cardOpxxHwCpp = ''
 cardOpxxHwH = ''
 cardEthernetPhyCpp = ''
+cardOpxxPhyCpp = ''
 
 def subStrRate(iterable):
 	return not re.search(r'Rate$', iterable)
@@ -54,7 +55,7 @@ def index(request):
         PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, perToolsH, toolFidCpp, MtnCmdDcCpp, \
         NESvcCfgPerMonitorCfgCpp, NeSvcCommDataDecomposeCpp, NeSvcCommDataMtnCpp, NeSvcCfgLgCfgMngCpp,\
         perChssHelperCpp, perChssModCpp, perChssModH, perNeModCpp, perNeModH, CMakeListsTxt, cliApiAlarmperCPP,\
-        cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp, cardOpxxHwCpp, cardOpxxHwH, cardEthernetPhyCpp
+        cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp, cardOpxxHwCpp, cardOpxxHwH, cardEthernetPhyCpp, cardOpxxPhyCpp
     requestPerList = []
     LPerId = ''
     PerIdUnit = ''
@@ -131,6 +132,7 @@ def index(request):
         cardOpxxHwCpp = getCardOpxxHwCpp(requestPerTabelName, requestPerNameListTemp)
         cardOpxxHwH = getCardOpxxHwH(requestPerTabelName, requestPerNameListTemp)
         cardEthernetPhyCpp = getCardEthernetPhyCpp(requestPerTabelName)
+        cardOpxxPhyCpp = getCardOpxxPhyCpp(requestPerTabelName)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
@@ -151,8 +153,19 @@ def index(request):
                                           'cliApiAlarmperCPP': cliApiAlarmperCPP, 'cliApiAlarmperH': cliApiAlarmperH,
                                           'cliCmdMoncmmCpp': cliCmdMoncmmCpp, 'cliCmdSysCpp': cliCmdSysCpp,
                                           'cardOpxxHwCpp': cardOpxxHwCpp, 'cardOpxxHwH': cardOpxxHwH,
-                                          'cardEthernetPhyCpp': cardEthernetPhyCpp})
+                                          'cardEthernetPhyCpp': cardEthernetPhyCpp, 'cardOpxxPhyCpp': cardOpxxPhyCpp})
 
+
+def getCardOpxxPhyCpp(requestPerTabelName):
+    outString = '''
+void CPhyCardOPXX::InitSubModulePerCfg(SEQUENCE<INT> &perCfg)
+{
+	perCfg.SetLength(+1); 
+
+	perCfg[+1] = LPerFb_''' + requestPerTabelName.lower() + ''';
+}
+'''
+    return outString
 
 def getCardEthernetPhyCpp(requestPerTabelName):
     outString = '''
@@ -1500,6 +1513,18 @@ INT CMtnCmdDc::OpHook_After_MtnCmd_Add(void* pArg1, void* pArg2, const CBString&
 
 def getToolFidCpp(requestPerTabelName):
     return '''
+extern INT CvtFidLong64ToStr( const Long64 llFid, const LFidType type, const Octet slot, String sFid, ULong len_sFid)
+{
+	switch (type)
+	{
+	case LFidType_''' + requestPerTabelName.lower() + ''':
+		NSPSNPrintf(sFid, len_sFid, "\\\\\\索引=%d", fid.索引值);    //TODO:实现索引
+		break;
+	}
+}
+
+/////////////////////////
+
 extern INT CvtFid2StrToLong64( const String sFid, const PerObjTypeList type, Long64& llFid )
 {
 	switch (type)
@@ -1513,6 +1538,7 @@ extern INT CvtFid2StrToLong64( const String sFid, const PerObjTypeList type, Lon
 	}
 }''' + '''
 
+//////////////////////////////////
 
 extern INT CvtFid2Long64ToStr(const Long64 llFid, const PerObjTypeList type, String sFid , ULong len_sFid)
 {

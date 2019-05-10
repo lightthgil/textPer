@@ -1,5 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+    <style>
+        fieldset{
+            background-color: #f1f1f1;
+            border: none;
+            border-radius: 2px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            padding: 0 .625em;
+        }
+
+        label{
+            cursor: pointer;
+            display: inline-block;
+            padding: 3px 6px;
+            text-align: left;
+            width: 420px;
+            vertical-align: top;
+        }
+
+        input{
+            font-size: inherit;
+        }
+    </style>
 <head>
     <meta charset="UTF-8">
     <title>test</title>
@@ -8,18 +31,24 @@
     <h1 style="background-color: antiquewhite;color: black;">自动生成性能规格</h1>
     <h2 style="...">需要生成的性能</h2>
         <form action="/index/" method="post">{% csrf_token %}
-            <label>表名</label>
+            <label>性能表名</label>
             <input type="text" name="requestPerTabelName"/>
+            <br />
             <label>PerObjTypeList 表ID</label>
             <input type="text" name="requestPerObjTypeListId"/>
+            <br />
             <label>LPerFb 表ID</label>
             <input type="text" name="requestPerFbId"/>
+            <br />
             <label>性能名称（可输入多个）</label>
             <input type="text" name="requestPerName"/>
+            <br />
             <label>性能ID(LPerId)（可输入多个或范围）</label>
             <input type="text" name="requestPerId"/>
+            <br />
             <label>设备使用的性能ID（LPerPrimId）（可输入多个或范围）</label>
             <input type="text" name="requestPrimId"/>
+            <br />
             <input type="submit" value="提交"/>
         </form>
     <hr />
@@ -168,6 +197,10 @@
     <label>card_ethernet_phy.cpp</label>
     <br>
     <textarea rows="7" cols="80">{{ cardEthernetPhyCpp }}</textarea>
+    <br>
+    <label>card_opxx_phy.cpp</label>
+    <br>
+    <textarea rows="7" cols="80">{{ cardOpxxPhyCpp }}</textarea>
     <br>
 
 
