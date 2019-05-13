@@ -383,6 +383,7 @@ INT CCardHwOPXX::Get''' + requestPerNameTemp + '''(TCmmPer & per)
 {
 	if(per.Id < k_NUM_IF)
 	{
+		//上报差值
 		per.Value = PerOverFlowProc(g_''' + direction + '''PktCnt[per.Id][e_MT_''' + emunName + '''], m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis[per.Id].''' + requestPerNameTemp + ''', WIDE_32);
 		m_''' + requestPerTabelName[0].lower() + requestPerTabelName[1:] + '''PerHis[per.Id].''' + requestPerNameTemp + ''' = g_''' + direction + '''PktCnt[per.Id][e_MT_''' + emunName + '''];
 	}
@@ -1218,6 +1219,7 @@ char* g_PerFbName[] =
 	"LPerFb_max = ''' + str(int(requestPerFbId) + 1) + '''"       //TODO:修改最大值
 };
 
+//////////////////////////
 
 CPerChss::CPerChss(NSPMag::MODULEHANDLE hModule, int ChssPos, void *pCfg, Boolean ifSupportCfp,NSPScheduleImp::SCHHANDLE hSchDsMsg)
 :CCardCmmUnit(hModule, 
@@ -1233,6 +1235,7 @@ CPerChss::CPerChss(NSPMag::MODULEHANDLE hModule, int ChssPos, void *pCfg, Boolea
 #endif
 }
 
+/////////////////////////////
 
 CPerChss::~CPerChss()
 {
@@ -1250,6 +1253,7 @@ CPerChss::~CPerChss()
 	}
 }
 
+/////////////////////
 
 INT CPerChss::Init(NSPTag hMem, NSPScheduleImp::SCHHANDLE hSch)
 {
@@ -1267,13 +1271,46 @@ INT CPerChss::Init(NSPTag hMem, NSPScheduleImp::SCHHANDLE hSch)
 	}
 }
 
+//////////////////////
 
 LDataType PerSupport[] = 
 {
-	LDataType_Per''' + requestPerTabelName + '''Cur
+	LDataType_Per''' + requestPerTabelName + '''Cur,
+	//.........
+	LDataType_PerMemCur
 };
 
+/////////////////////////////////////
 
+INT CPerChss::Start()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	ret = register_proxy_data(TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''Cur, te_spectable), 
+		m_ulFullModId, 
+		this, 
+		(proxy_data_query_callback)per_data_provide_notify);
+	if(ret)
+	{
+		NSPLog::log(per_chss_log_id, NSPLog::L_ERROR, -1,
+			"per chss %d reg proxy table:%d,ret %d\\n", 
+			m_ChssPos, LDataType_Per''' + requestPerTabelName + '''Cur, ret);
+	}
+#endif
+}
+
+///////////////////////////
+
+INT CPerChss::Stop()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+    unregister_proxy_data(TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''Cur, te_spectable), 
+		m_ulFullModId, 
+		this, 
+		(proxy_data_query_callback)per_data_provide_notify);
+#endif
+}
+
+//////////////////////////////////
 
 INT CPerChss::Cur2His(time_t StartTime, time_t EndTime, const Octet periodType)
 {
@@ -1282,7 +1319,7 @@ INT CPerChss::Cur2His(time_t StartTime, time_t EndTime, const Octet periodType)
 #endif
 }
 
-
+////////////////////////////
 
 INT CPerChss::ClearCurPer(Long64 fid, Long type, const Octet period, String expression, Short perId)
 {
@@ -1296,6 +1333,7 @@ INT CPerChss::ClearCurPer(Long64 fid, Long type, const Octet period, String expr
 	}
 }
 
+//////////////////////////
 
 void CPerChss::ClearCurPerAlarm(Long64 fid, Long type, const Octet period)
 {
@@ -1304,6 +1342,7 @@ void CPerChss::ClearCurPerAlarm(Long64 fid, Long type, const Octet period)
 #endif
 }
 
+//////////////////////////
 
 INT CPerChss::GetPrimData()
 {
@@ -1312,6 +1351,7 @@ INT CPerChss::GetPrimData()
 #endif
 }
 
+//////////////////////////
 
 INT CPerChss::QueryCurPer(VTable& vTable, Long type, String expression)
 {
@@ -1328,7 +1368,7 @@ INT CPerChss::QueryCurPer(VTable& vTable, Long type, String expression)
 	}
 }
 
-
+//////////////////////////
 
 void CPerChss::dbgOutput()
 {
@@ -1375,7 +1415,7 @@ void  CPerMonItemCfg_Helper_chss::Dispatch(void *pArg, TDSData * data)
 		case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 			if (o.m_pPer''' + requestPerTabelName.upper() + ''')
-				o.m_pPer''' + requestPerTabelName.upper() + '''->ProcNode(m_IncChg[i], ifRptHisData);
+				o.m_pPer''' + requestPerTabelName.upper() + '''->ProcPerItemNode(m_IncChg[i]);
 #endif
 			break;
 		}
