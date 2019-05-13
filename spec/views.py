@@ -74,19 +74,35 @@ def index(request):
         requestPrimId = request.POST.get('requestPrimId', None)
         requestPerNameListTemp = re.split("[_/\\\\,.\-;:`~|<> ]", requestPerName)
         requestPerNameListTemp = filter(None, requestPerNameListTemp)  # 去除空值
-        if (re.search(r'[~-]', requestPerId)):
-            requestPerIdRange = re.split("[~-]", requestPerId)
-            requestPerIdListTemp = range(int(requestPerIdRange[0]), int(requestPerIdRange[1]) + 1)
-        else:
-            requestPerIdListTemp = re.split("[_/\\\\,.\;:`|<> ]", requestPerId)
+        requestPerIdListTemp = re.split("[_/\\\\,.\;:`|<> ]", requestPerId)
+        requestPerIdListTempNew = requestPerIdListTemp[:]
+        insertNum = 0
+        for requestPerIdListTempIndex, requestPerIdListTempItem in enumerate(requestPerIdListTempNew):
+            if (re.search(r'[~-]', requestPerIdListTempItem)):
+                requestPerIdRange = re.split("[~-]", requestPerIdListTempItem)
+                insertIndex = requestPerIdListTempIndex + insertNum
+                requestPerIdListTemp.pop(insertIndex)
+                insertNum -= 1
+                for i in range(int(requestPerIdRange[0]), int(requestPerIdRange[1]) + 1):
+                    requestPerIdListTemp.insert(insertIndex, i)
+                    insertIndex = insertIndex + 1
+                    insertNum += 1
         requestPerIdListTemp = filter(None, requestPerIdListTemp)  # 去除空值
         if (requestPrimId == ''):
             requestPrimId = requestPerId
-        if (re.search(r'[~-]', requestPrimId)):
-            requestPrimIdRange = re.split("[~-]", requestPrimId)
-            requestPrimIdListTemp = range(int(requestPrimIdRange[0]), int(requestPrimIdRange[1]) + 1)
-        else:
-            requestPrimIdListTemp = re.split("[_/\\\\,.\;:`|<> ]", requestPrimId)
+        requestPrimIdListTemp = re.split("[_/\\\\,.\;:`|<> ]", requestPrimId)
+        requestPrimIdListTempNew = requestPrimIdListTemp[:]
+        insertNum = 0
+        for requestPrimIdListTempIndex, requestPrimIdListTempItem in enumerate(requestPrimIdListTempNew):
+            if (re.search(r'[~-]', requestPrimIdListTempItem)):
+                requestPrimIdRange = re.split("[~-]", requestPrimIdListTempItem)
+                insertIndex = requestPrimIdListTempIndex + insertNum
+                requestPrimIdListTemp.pop(insertIndex)
+                insertNum -= 1
+                for i in range(int(requestPrimIdRange[0]), int(requestPrimIdRange[1]) + 1):
+                    requestPrimIdListTemp.insert(insertIndex, i)
+                    insertIndex = insertIndex + 1
+                    insertNum += 1
         requestPrimIdListTemp = filter(None, requestPrimIdListTemp)  # 去除空值
 
         setPerXXXCurStart(PerXXXCur, requestPerTabelName)
@@ -1160,7 +1176,8 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''*)pHis->data.ParamOut();'''
 
     for requestPerNameTemp in requestPerNameList:
-        outString += '''
+        if not (re.search(r'Rate$', requestPerNameTemp)):
+            outString += '''
 		EXPORT_DATA_NEW(pData''' + requestPerTabelName + ''', ''' + requestPerNameTemp + ''', llTemp, period, pNode);'''
 
     outString += '''
@@ -1681,7 +1698,8 @@ void SPerPrim''' + requestPerTabelName + '''::Calc( SPerPrim''' + requestPerTabe
 }
 
 void SPerPrim''' + requestPerTabelName + '''::Update( SPerPrim''' + requestPerTabelName + '''& newData )
-{'''
+{
+	//如果非累加值，使用PER_PRIM_UPDATE_NEW'''
 
     hasRate = False
     for requestPerNameTemp in requestPerNameList:
