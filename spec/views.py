@@ -10,6 +10,7 @@ from django.shortcuts import render
 # Create your views here.
 requestPerTabelName = ''
 requestPerList = []
+requestPerPrimList = []
 LPerId = ''
 PerIdUnit = ''
 LPerPrimId = ''
@@ -55,8 +56,10 @@ def index(request):
         PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, perToolsH, toolFidCpp, MtnCmdDcCpp, \
         NESvcCfgPerMonitorCfgCpp, NeSvcCommDataDecomposeCpp, NeSvcCommDataMtnCpp, NeSvcCfgLgCfgMngCpp,\
         perChssHelperCpp, perChssModCpp, perChssModH, perNeModCpp, perNeModH, CMakeListsTxt, cliApiAlarmperCPP,\
-        cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp, cardOpxxHwCpp, cardOpxxHwH, cardEthernetPhyCpp, cardOpxxPhyCpp
+        cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp, cardOpxxHwCpp, cardOpxxHwH, cardEthernetPhyCpp, cardOpxxPhyCpp,\
+        requestPerPrimList
     requestPerList = []
+    requestPerPrimList = []
     LPerId = ''
     PerIdUnit = ''
     LPerPrimId = ''
@@ -65,16 +68,15 @@ def index(request):
 
 
     if request.method == 'POST':
-
         requestPerTabelName = request.POST.get('requestPerTabelName', None)
         requestPerObjTypeListId = request.POST.get('requestPerObjTypeListId', None)
         requestPerFbId = request.POST.get('requestPerFbId', None)
         requestPerName = request.POST.get('requestPerName', None)
         requestPerId = request.POST.get('requestPerId', None)
         requestPrimId = request.POST.get('requestPrimId', None)
-        requestPerNameListTemp = re.split("[_/\\\\,.\-;:`~|<> ]", requestPerName)
+        requestPerNameListTemp = re.split("[_/\\\\,.\-;:`~|<> \t]", requestPerName)
         requestPerNameListTemp = filter(None, requestPerNameListTemp)  # 去除空值
-        requestPerIdListTemp = re.split("[_/\\\\,.\;:`|<> ]", requestPerId)
+        requestPerIdListTemp = re.split("[_/\\\\,.\;:`|<> \t]", requestPerId)
         requestPerIdListTempNew = requestPerIdListTemp[:]
         insertNum = 0
         for requestPerIdListTempIndex, requestPerIdListTempItem in enumerate(requestPerIdListTempNew):
@@ -90,7 +92,7 @@ def index(request):
         requestPerIdListTemp = filter(None, requestPerIdListTemp)  # 去除空值
         if (requestPrimId == ''):
             requestPrimId = requestPerId
-        requestPrimIdListTemp = re.split("[_/\\\\,.\;:`|<> ]", requestPrimId)
+        requestPrimIdListTemp = re.split("[_/\\\\,.\;:`|<> \t]", requestPrimId)
         requestPrimIdListTempNew = requestPrimIdListTemp[:]
         insertNum = 0
         for requestPrimIdListTempIndex, requestPrimIdListTempItem in enumerate(requestPrimIdListTempNew):
@@ -105,6 +107,10 @@ def index(request):
                     insertNum += 1
         requestPrimIdListTemp = filter(None, requestPrimIdListTemp)  # 去除空值
 
+        requestPrimNameListNew, requestPrimIdListNew = GetPrimNameAndId(requestPerNameListTemp, requestPrimIdListTemp)
+        for primName, PrimId in zip(requestPrimNameListNew, requestPrimIdListNew):
+            requestPerPrimList.append({'name': primName, 'id': PrimId})
+
         setPerXXXCurStart(PerXXXCur, requestPerTabelName)
         setPerXXXHisStart(PerXXXHis, requestPerTabelName)
         neBase = getNeBaseOtrStart(requestPerTabelName)
@@ -114,14 +120,15 @@ def index(request):
         LPerFb = getLPerFb(requestPerTabelName, requestPerFbId)
         XXXWs = getXXXWs()
 
-        for requestPerNameTemp, requestPerIdTemp, requestPrimIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp, requestPrimIdListTemp):
-            requestPerList.append({'name': requestPerNameTemp, 'id': requestPerIdTemp, 'primId': requestPrimIdTemp})
+        for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp):
+            requestPerList.append({'name': requestPerNameTemp, 'id': requestPerIdTemp})
             LPerId += getLPerId(requestPerIdTemp, requestPerNameTemp)
             PerIdUnit += getPerIdUnit(requestPerIdTemp)
-            LPerPrimId += getLPerPrimId(requestPrimIdTemp, requestPerNameTemp)
             PerXXXCur['data'] += getPerXXXCurData(requestPerNameTemp)
             PerXXXHis['data'] += getPerXXXHisData(requestPerNameTemp)
             neBase += getNeBaseOtrData(requestPerNameTemp)
+
+        LPerPrimId = getLPerPrimId(requestPrimNameListNew, requestPrimIdListNew)
 
         neBase += getNeBaseOtrEnd(requestPerTabelName)
         setPerXXXCurEnd(PerXXXCur)
@@ -151,6 +158,7 @@ def index(request):
         cardOpxxPhyCpp = getCardOpxxPhyCpp(requestPerTabelName)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
+                                          'primdData': requestPerPrimList,
                                           'PerIdUnitTd': PerIdUnit, 'LPerPrimIdTd': LPerPrimId,
                                           'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis,
                                           'neBaseOtrXml': neBase, 'PerObjTypeList': PerObjTypeList,
@@ -170,6 +178,34 @@ def index(request):
                                           'cliCmdMoncmmCpp': cliCmdMoncmmCpp, 'cliCmdSysCpp': cliCmdSysCpp,
                                           'cardOpxxHwCpp': cardOpxxHwCpp, 'cardOpxxHwH': cardOpxxHwH,
                                           'cardEthernetPhyCpp': cardEthernetPhyCpp, 'cardOpxxPhyCpp': cardOpxxPhyCpp})
+
+def GetPrimNameAndId(requestPerNameList, requestPrimIdList):
+    requestPrimNameListNew = []
+    requestPrimIdListNew = []
+    index = 0
+    for requestPerName in requestPerNameList:
+        if re.search(r'Min$', requestPerName):
+            pass
+        elif re.search(r'Max$', requestPerName):
+            pass
+        elif re.search(r'Rate$', requestPerName):
+            pass
+        elif re.search(r'Mean$', requestPerName):
+            pass
+        elif re.search(r'^Cumulated', requestPerName):
+            pass
+        elif re.search(r'Cur$', requestPerName):
+            subName = re.sub(r'Cur$', '', requestPerName)
+            requestPrimNameListNew.append(subName)
+            requestPrimIdListNew.append(requestPrimIdList[index])
+            index += 1
+        else:
+            requestPrimNameListNew.append(requestPerName)
+            requestPrimIdListNew.append(requestPrimIdList[index])
+            index += 1
+
+    return requestPrimNameListNew, requestPrimIdListNew
+
 
 
 def getCardOpxxPhyCpp(requestPerTabelName):
@@ -1951,8 +1987,8 @@ def getXXXWs():
     global PerXXXCur
     global PerXXXHis
     return '''
-	<Spec>''' + PerXXXCur['name'] + '''.V0.ts</Spec>
-	<Spec>''' + PerXXXHis['name'] + '''.V0.ts</Spec>
+	<Spec>''' + PerXXXCur['name'] + '''.VX.ts</Spec>
+	<Spec>''' + PerXXXHis['name'] + '''.VX.ts</Spec>
     '''
 
 
@@ -1979,7 +2015,27 @@ def getLPerFb(requestPerTabelName, requestPerFbId):
           </val>
         </val>
       </Any>
-'''
+      <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="Short" val="''' + str(int(requestPerFbId) + 1) + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val=""/>
+            </Any>
+            <Any>
+              <val teid="String" val=""/>
+            </Any>
+            <Any>
+              <val teid="String" val="max"/>
+            </Any>
+            <Any>
+              <val teid="String" val="max"/>
+            </Any>
+          </val>
+        </val>
+      </Any>'''
 
 
 def getLDataType():
@@ -2027,8 +2083,7 @@ def getLDataType():
             </Any>
           </val>
         </val>
-      </Any>
-    '''
+      </Any>'''
 
 
 def getDataTypeDef():
@@ -2064,34 +2119,32 @@ def getDataTypeDef():
             </Any>
           </val>
         </val>
-      </Any>
-    '''
+      </Any>'''
 
 
 def getPerObjTypeList(requestPerTabelName, requestPerObjTypeListId):
     return '''
-        <Any>
-          <val teid="Any_Seq">
-            <val>
-              <Any>
-                <val teid="Short" val="''' + requestPerObjTypeListId + '''"/>
-              </Any>
-              <Any>
-                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
-              </Any>
-              <Any>
-                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
-              </Any>
-              <Any>
-                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
-              </Any>
-              <Any>
-                <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
-              </Any>
-            </val>
+      <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="Short" val="''' + requestPerObjTypeListId + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+            </Any>
+            <Any>
+              <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
+            </Any>
           </val>
-        </Any>
-              '''
+        </val>
+      </Any>'''
 
 
 def getNeBaseOtrEnd(requestPerTabelName):
@@ -2099,7 +2152,7 @@ def getNeBaseOtrEnd(requestPerTabelName):
 </attrib>
 
 
-
+/////////////////////////////////
 
 <str value="MPer''' + requestPerTabelName + '''"></str>
 
@@ -2112,8 +2165,7 @@ def getNeBaseOtrData(requestPerNameTemp):
 <memo id="0"><![CDATA[]]></memo>
 <memo id="1"><![CDATA[]]></memo>
 <memo id="2"><![CDATA[]]></memo>
-</attribelem>
-            '''
+</attribelem>'''
 
 
 def getNeBaseOtrStart(requestPerTabelName):
@@ -2124,8 +2176,7 @@ def getNeBaseOtrStart(requestPerTabelName):
 <parent value=""></parent>
 <memo id="0"><![CDATA[]]></memo>
 <memo id="1"><![CDATA[]]></memo>
-<memo id="2"><![CDATA[]]></memo>
-            '''
+<memo id="2"><![CDATA[]]></memo>'''
     return neBase
 
 
@@ -2175,8 +2226,7 @@ def setPerXXXHisEnd(PerXXXHis):
     <map/>
     <param/>
   </Spec>
-</ObjectPersistSpace>
-                '''
+</ObjectPersistSpace>'''
 
 
 def setPerXXXHisStart(PerXXXHis, requestPerTabelName):
@@ -2276,8 +2326,7 @@ def setPerXXXHisStart(PerXXXHis, requestPerTabelName):
         <flag/>
         <hook/>
         <param/>
-      </TableSpecField>
-        '''
+      </TableSpecField>'''
 
 
 def setPerXXXCurEnd(PerXXXCur):
@@ -2312,8 +2361,7 @@ def setPerXXXCurEnd(PerXXXCur):
       </KVAnyPair>
     </param>
   </Spec>
-</ObjectPersistSpace>
-        '''
+</ObjectPersistSpace>'''
 
 
 def setPerXXXCurStart(PerXXXCur, requestPerTabelName):
@@ -2357,8 +2405,7 @@ def setPerXXXCurStart(PerXXXCur, requestPerTabelName):
             <val teid="Octet" val="2"/>
           </KVAnyPair>
         </param>
-      </TableSpecField>
-        '''
+      </TableSpecField>'''
 
 
 def getPerXXXHisData(requestPerNameTemp):
@@ -2376,12 +2423,13 @@ def getPerXXXHisData(requestPerNameTemp):
         <flag/>
         <hook/>
         <param/>
-      </TableSpecField>
-            '''
+      </TableSpecField>'''
 
 
 def getPerXXXCurData(requestPerNameTemp):
-    return '''
+    outSrint = ''
+    if not (re.search(r'Min$', requestPerNameTemp) or re.search(r'Max$', requestPerNameTemp) or re.search(r'Mean$', requestPerNameTemp)):
+        outSrint = '''
       <TableSpecField id="''' + requestPerNameTemp + '''" acl="0" type="Long64">
         <disp>
           <String val="英文注释"/>
@@ -2395,34 +2443,37 @@ def getPerXXXCurData(requestPerNameTemp):
         <flag/>
         <hook/>
         <param/>
-      </TableSpecField>            
-            '''
+      </TableSpecField>'''
+
+    return outSrint
 
 
-def getLPerPrimId(requestPerIdTemp, requestPerNameTemp):
-    return '''
+def getLPerPrimId(PrimNameList, PrimIdList):
+    outStrint = ''
+    for primName, primId in zip(PrimNameList, PrimIdList):
+        outStrint += '''
       <Any>
         <val teid="Any_Seq">
           <val>
             <Any>
-              <val teid="Short" val="''' + str(requestPerIdTemp) + '''"/>
+              <val teid="Short" val="''' + str(primId) + '''"/>
             </Any>
             <Any>
-              <val teid="String" val="''' + requestPerNameTemp + '''"/>
+              <val teid="String" val="''' + primName + '''"/>
             </Any>
             <Any>
               <val teid="String" val=""/>
             </Any>
             <Any>
-              <val teid="String" val="''' + requestPerNameTemp + '''"/>
+              <val teid="String" val="''' + primName + '''"/>
             </Any>
             <Any>
               <val teid="String" val=""/>
             </Any>
           </val>
         </val>
-      </Any>
-            '''
+      </Any>'''
+    return outStrint
 
 
 def getPerIdUnit(requestPerIdTemp):
@@ -2434,7 +2485,7 @@ def getPerIdUnit(requestPerIdTemp):
               <val teid="Short" val="''' + str(requestPerIdTemp) + '''"/>
             </Any>
             <Any>
-              <val teid="String" val="英文单位"/>
+              <val teid="String" val="英文单位缩写"/>
             </Any>
             <Any>
               <val teid="String" val="中文单位"/>
@@ -2443,15 +2494,14 @@ def getPerIdUnit(requestPerIdTemp):
               <val teid="String" val="中文单位"/>
             </Any>
             <Any>
-              <val teid="String" val="英文单位"/>
+              <val teid="String" val="英文单位全称"/>
             </Any>
             <Any>
-              <val teid="String" val="英文单位"/>
+              <val teid="String" val="英文单位全称"/>
             </Any>
           </val>
         </val>
-      </Any>            
-            '''
+      </Any>'''
 
 
 def getLPerId(requestPerIdTemp, requestPerNameTemp):
@@ -2476,6 +2526,5 @@ def getLPerId(requestPerIdTemp, requestPerNameTemp):
               </Any>
             </val>
           </val>
-        </Any>
-              '''
+        </Any>'''
     return LPerIdTemp

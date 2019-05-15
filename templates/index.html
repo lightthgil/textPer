@@ -25,7 +25,7 @@
     </style>
 <head>
     <meta charset="UTF-8">
-    <title>test</title>
+    <title>自动生成性能规格、代码</title>
 </head>
 <body>
     <h1 style="background-color: antiquewhite;color: black;">自动生成性能规格、代码</h1>
@@ -54,18 +54,31 @@
     <hr />
     <h2 style="...">生成结果</h2>
         <table border="1">
-        <caption>{{ tableName }}</caption>
+        <caption>{{ tableName }} Per</caption>
             <thead>
                 <th>需要添加的性能</th>
                 <th>对应的性能码</th>
-                <th>设备使用的性能码</th>
             </thead>
             <tbody>
                 {% for line in data %}
                     <tr>
                         <td>{{ line.name }}</td>
                         <td>{{ line.id }}</td>
-                        <td>{{ line.primId }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <table border="2">
+        <caption>{{ tableName }} Prim</caption>
+            <thead>
+                <th>需要从设备获取的性能</th>
+                <th>对应的性能码</th>
+            </thead>
+            <tbody>
+                {% for line2 in primdData %}
+                    <tr>
+                        <td>{{ line2.name }}</td>
+                        <td>{{ line2.id }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -82,11 +95,11 @@
     <br>
     <textarea rows="20" cols="200">{{ LPerPrimIdTd }}</textarea>
     <br>
-    <label>{{ PerXXXCurTd.name }}.VX.td</label>
+    <label>{{ PerXXXCurTd.name }}.VX.ts</label>
     <br>
     <textarea rows="20" cols="200">{{ PerXXXCurTd.data }}</textarea>
     <br>
-    <label>{{ PerXXXHisTd.name }}.VX.td</label>
+    <label>{{ PerXXXHisTd.name }}.VX.ts</label>
     <br>
     <textarea rows="20" cols="200">{{ PerXXXHisTd.data }}</textarea>
     <br>
