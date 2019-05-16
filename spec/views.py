@@ -157,8 +157,8 @@ def index(request):
         cliApiAlarmperH = getCliApiAlarmperH(requestPerTabelName, requestPerNameListTemp)
         cliCmdMoncmmCpp = getCliCmdMoncmmCpp(requestPerTabelName, requestPerNameListTemp)
         cliCmdSysCpp = getCliCmdSysCpp(requestPerTabelName)
-        cardOpxxHwCpp = getCardOpxxHwCpp(requestPerTabelName, requestPerNameListTemp)
-        cardOpxxHwH = getCardOpxxHwH(requestPerTabelName, requestPerNameListTemp)
+        cardOpxxHwCpp = getCardOpxxHwCpp(requestPerTabelName, requestPrimNameListNew)
+        cardOpxxHwH = getCardOpxxHwH(requestPerTabelName, requestPrimNameListNew)
         cardEthernetPhyCpp = getCardEthernetPhyCpp(requestPerTabelName)
         cardOpxxPhyCpp = getCardOpxxPhyCpp(requestPerTabelName)
         perPrcsBase = getPerPrcsBase(requestPrimNameListNew, requestPrimIdListNew)
@@ -298,8 +298,8 @@ void CPhyCardEth::InitSubModulePerCfg(SEQUENCE<INT> &perCfg)
 '''
     return outString
 
-def getCardOpxxHwH(requestPerTabelName, requestPerNameList):
-    requestPerNameList = filter(subStrRate, requestPerNameList)
+def getCardOpxxHwH(requestPerTabelName, requestPrimNameList):
+    # requestPerNameList = filter(subStrRate, requestPerNameList)
 
     outString = '''
 struct TCmmPer
@@ -310,7 +310,7 @@ struct TCmmPer
 
 struct T''' + requestPerTabelName + '''Per
 {'''
-    for requestPerNameTemp in requestPerNameList:
+    for requestPerNameTemp in requestPrimNameList:
         outString += '''
 	Long64 ''' + requestPerNameTemp + ''';'''
     outString += '''
@@ -327,7 +327,7 @@ public:
 	INT Init''' + requestPerTabelName + '''Per(Long fidType, UFid uFid, Long objType);
 
 	// ''' + requestPerTabelName.lower() + ''' 性能'''
-    for requestPerNameTemp in requestPerNameList:
+    for requestPerNameTemp in requestPrimNameList:
         outString += '''
 	INT Get''' + requestPerNameTemp + '''(TCmmPer & per);'''
 
@@ -342,8 +342,8 @@ public:
 
     return outString
 
-def getCardOpxxHwCpp(requestPerTabelName, requestPerNameList):
-    requestPerNameList = filter(subStrRate, requestPerNameList)
+def getCardOpxxHwCpp(requestPerTabelName, requestPrimNameList):
+    # requestPerNameList = filter(subStrRate, requestPerNameList)
 
     outString = '''
 extern  UINT32   g_RecvPktCnt[k_NUM_IF][k_PKT_TYPE_NUM] ;
@@ -372,7 +372,7 @@ S''' + requestPerTabelName + '''PerTbl g_a''' + requestPerTabelName + '''PerTab[
 {
 	// ''' + requestPerTabelName.lower() + ''' 性能'''
 
-    for requestPerNameTemp in requestPerNameList:
+    for requestPerNameTemp in requestPrimNameList:
         if not(re.search(r'Rate$', requestPerNameTemp)):
             outString += '''
 	{LPerPrimId_''' + requestPerNameTemp + ''',        &CCardHwOPXX::Get''' + requestPerNameTemp + '''},'''
@@ -419,7 +419,7 @@ INT CCardHwOPXX::GetPerPrimIdData(UShort primId, SEQUENCE<TPer>& data, Long flag
 	ULong len = data.Length();
 	INT ret = LRet_success;
 
-	else if (primId >= LPerPrimId_''' + requestPerNameList[0] + ''' && primId <= LPerPrimId_''' + requestPerNameList[-1] + ''')
+	else if (primId >= LPerPrimId_''' + requestPrimNameList[0] + ''' && primId <= LPerPrimId_''' + requestPrimNameList[-1] + ''')
 	{
 		int pernum = COUNTOF(g_a''' + requestPerTabelName + '''PerTab);
 		for (i = 0; i < pernum; ++i)
@@ -475,7 +475,7 @@ INT CCardHwOPXX::Init''' + requestPerTabelName + '''Per(Long fidType, UFid uFid,
 	if(per.Id < k_NUM_IF)
 	{
 		// ''' + requestPerTabelName.lower() + ''' 性能读一遍获取初始值'''
-    for requestPerNameTemp in requestPerNameList:
+    for requestPerNameTemp in requestPrimNameList:
         if not(re.search(r'Rate$', requestPerNameTemp)):
             outString += '''
 		Get''' + requestPerNameTemp + '''(per);'''
@@ -488,7 +488,7 @@ INT CCardHwOPXX::Init''' + requestPerTabelName + '''Per(Long fidType, UFid uFid,
 
 
 // ''' + requestPerTabelName.lower() + ''' 性能'''
-    for requestPerNameTemp in requestPerNameList:
+    for requestPerNameTemp in requestPrimNameList:
         if not(re.search(r'Rate$', requestPerNameTemp)):
             direction = 'Recv'
             emunName = requestPerNameTemp.upper()
