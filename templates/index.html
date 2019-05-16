@@ -49,6 +49,8 @@
             <label>设备使用的性能ID（LPerPrimId）（可输入多个或范围）</label>
             <input type="text" name="requestPrimId"/>
             <br />
+{#            <label><input name="needDraw" type="checkbox" value="needDraw" />需要绘图？</label>#}
+{#            <br />#}
             <input type="submit" value="提交"/>
         </form>
     <hr />
@@ -85,135 +87,143 @@
         </table>
     <label>LPerId.V0.td</label>
     <br>
-    <textarea rows="20" cols="200">{{ LperIdTd }}</textarea>
+    <textarea rows="20" cols="150">{{ LperIdTd }}</textarea>
     <br>
     <label>PerIdUint.V0.td</label>
     <br>
-    <textarea rows="20" cols="200">{{ PerIdUnitTd }}</textarea>
+    <textarea rows="20" cols="150">{{ PerIdUnitTd }}</textarea>
     <br>
     <label>LPerPrimId.V0.td</label>
     <br>
-    <textarea rows="20" cols="200">{{ LPerPrimIdTd }}</textarea>
+    <textarea rows="20" cols="150">{{ LPerPrimIdTd }}</textarea>
     <br>
     <label>{{ PerXXXCurTd.name }}.VX.ts</label>
     <br>
-    <textarea rows="20" cols="200">{{ PerXXXCurTd.data }}</textarea>
+    <textarea rows="20" cols="150">{{ PerXXXCurTd.data }}</textarea>
     <br>
     <label>{{ PerXXXHisTd.name }}.VX.ts</label>
     <br>
-    <textarea rows="20" cols="200">{{ PerXXXHisTd.data }}</textarea>
+    <textarea rows="20" cols="150">{{ PerXXXHisTd.data }}</textarea>
     <br>
     <label>ne_base_.ort.xml</label>
     <br>
-    <textarea rows="20" cols="200">{{ neBaseOtrXml }}</textarea>
+    <textarea rows="20" cols="150">{{ neBaseOtrXml }}</textarea>
     <br>
     <label>PerObjTypeList.V0.td</label>
     <br>
-    <textarea rows="20" cols="200">{{ PerObjTypeList }}</textarea>
+    <textarea rows="20" cols="150">{{ PerObjTypeList }}</textarea>
     <br>
     <label>DataTypeDef.V2.td</label>
     <br>
-    <textarea rows="20" cols="200">{{ DataTypeDef }}</textarea>
+    <textarea rows="20" cols="150">{{ DataTypeDef }}</textarea>
     <br>
     <label>LDataType.V2.td</label>
     <br>
-    <textarea rows="20" cols="200">{{ LDataType }}</textarea>
+    <textarea rows="20" cols="150">{{ LDataType }}</textarea>
     <br>
     <label>LPerFb.V0.td</label>
     <br>
-    <textarea rows="20" cols="200">{{ LPerFb }}</textarea>
+    <textarea rows="20" cols="150">{{ LPerFb }}</textarea>
     <br>
     <label>XXX.ws</label>
     <br>
-    <textarea rows="3" cols="200">{{ XXXWs }}</textarea>
+    <textarea rows="3" cols="150">{{ XXXWs }}</textarea>
+    <br>
+    <label>XXX.mo</label>
+    <br>
+    <textarea rows="3" cols="150">{{ XXXMo }}</textarea>
     <br>
     <label>per_tools.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ perToolsCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ perToolsCpp }}</textarea>
     <br>
     <label>per_tools.h</label>
     <br>
-    <textarea rows="20" cols="200">{{ perToolsH }}</textarea>
+    <textarea rows="20" cols="150">{{ perToolsH }}</textarea>
     <br>
     <label>tool_fid.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ toolFidCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ toolFidCpp }}</textarea>
     <br>
     <label>MtnCmdDc.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ MtnCmdDcCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ MtnCmdDcCpp }}</textarea>
     <br>
     <label>NESvcCfg_PerMonitorCfg.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ NESvcCfgPerMonitorCfgCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ NESvcCfgPerMonitorCfgCpp }}</textarea>
     <br>
     <label>NeSvcCommData_decompose.cpp</label>
     <br>
-    <textarea rows="13" cols="200">{{ NeSvcCommDataDecomposeCpp }}</textarea>
+    <textarea rows="13" cols="150">{{ NeSvcCommDataDecomposeCpp }}</textarea>
     <br>
     <label>NeSvcCommData_mtn.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ NeSvcCommDataMtnCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ NeSvcCommDataMtnCpp }}</textarea>
     <br>
     <label>NeSvcCfg_LgCfgMng.cpp</label>
     <br>
-    <textarea rows="13" cols="200">{{ NeSvcCfgLgCfgMngCpp }}</textarea>
+    <textarea rows="13" cols="150">{{ NeSvcCfgLgCfgMngCpp }}</textarea>
     <br>
     <label>per_chss_helper.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ perChssHelperCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ perChssHelperCpp }}</textarea>
     <br>
     <label>per_chss_mod.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ perChssModCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ perChssModCpp }}</textarea>
     <br>
     <label>per_chss_mod.h</label>
     <br>
-    <textarea rows="20" cols="200">{{ perChssModH }}</textarea>
+    <textarea rows="20" cols="150">{{ perChssModH }}</textarea>
     <br>
     <label>per_ne_mod.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ perNeModCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ perNeModCpp }}</textarea>
     <br>
     <label>per_ne_mod.h</label>
     <br>
-    <textarea rows="7" cols="200">{{ perNeModH }}</textarea>
+    <textarea rows="7" cols="150">{{ perNeModH }}</textarea>
+    <br>
+    <label>per_prcs_base.h</label>
+    <br>
+    <textarea rows="15" cols="150">{{ perPrcsBase }}</textarea>
     <br>
     <label>CMakeLists.txt</label>
     <br>
-    <textarea rows="7" cols="200">{{ CMakeListsTxt }}</textarea>
+    <textarea rows="7" cols="150">{{ CMakeListsTxt }}</textarea>
     <br>
     <label>cli_api_alarmper.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ cliApiAlarmperCPP }}</textarea>
+    <textarea rows="20" cols="150">{{ cliApiAlarmperCPP }}</textarea>
     <br>
     <label>cli_api_alarmper.h</label>
     <br>
-    <textarea rows="20" cols="200">{{ cliApiAlarmperH }}</textarea>
+    <textarea rows="20" cols="150">{{ cliApiAlarmperH }}</textarea>
     <br>
     <label>cli_cmd_moncmm.cpp</label>
     <br>
-    <textarea rows="20" cols="200">{{ cliCmdMoncmmCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ cliCmdMoncmmCpp }}</textarea>
     <br>
     <label>cli_cmd_sys.cpp</label>
     <br>
-    <textarea rows="10" cols="200">{{ cliCmdSysCpp }}</textarea>
+    <textarea rows="10" cols="150">{{ cliCmdSysCpp }}</textarea>
     <br>
     <label>card_opxx_hw.cpp (//TODO:opxx替换成实际单盘)</label>
     <br>
-    <textarea rows="20" cols="200">{{ cardOpxxHwCpp }}</textarea>
+    <textarea rows="20" cols="150">{{ cardOpxxHwCpp }}</textarea>
     <br>
     <label>card_opxx_hw.h (//TODO:opxx替换成实际单盘)</label>
     <br>
-    <textarea rows="20" cols="200">{{ cardOpxxHwH }}</textarea>
+    <textarea rows="20" cols="150">{{ cardOpxxHwH }}</textarea>
     <br>
     <label>card_ethernet_phy.cpp</label>
     <br>
-    <textarea rows="7" cols="200">{{ cardEthernetPhyCpp }}</textarea>
+    <textarea rows="7" cols="150">{{ cardEthernetPhyCpp }}</textarea>
     <br>
     <label>card_opxx_phy.cpp</label>
     <br>
-    <textarea rows="7" cols="200">{{ cardOpxxPhyCpp }}</textarea>
+    <textarea rows="7" cols="150">{{ cardOpxxPhyCpp }}</textarea>
     <br>
 
 

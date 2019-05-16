@@ -22,6 +22,7 @@ DataTypeDef = ''
 LDataType = ''
 LPerFb = ''
 XXXWs = ''
+XXXMo = ''
 perToolsCpp = ''
 perToolsH = ''
 toolFidCpp = ''
@@ -35,6 +36,7 @@ perChssModCpp = ''
 perChssModH = ''
 perNeModCpp = ''
 perNeModH = ''
+perPrcsBase = ''
 CMakeListsTxt = ''
 cliApiAlarmperCPP = ''
 cliApiAlarmperH = ''
@@ -53,11 +55,11 @@ def index(request):
     # request.GET
     # return HttpResponse("hello world!")
     global requestPerTabelName, requestPerList, LPerId, PerIdUnit, LPerPrimId, PerXXXCur, PerXXXHis, neBase,\
-        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, perToolsCpp, perToolsH, toolFidCpp, MtnCmdDcCpp, \
+        PerObjTypeList, DataTypeDef, LDataType, LPerFb, XXXWs, XXXMo, perToolsCpp, perToolsH, toolFidCpp, MtnCmdDcCpp, \
         NESvcCfgPerMonitorCfgCpp, NeSvcCommDataDecomposeCpp, NeSvcCommDataMtnCpp, NeSvcCfgLgCfgMngCpp,\
         perChssHelperCpp, perChssModCpp, perChssModH, perNeModCpp, perNeModH, CMakeListsTxt, cliApiAlarmperCPP,\
         cliApiAlarmperH, cliCmdMoncmmCpp, cliCmdSysCpp, cardOpxxHwCpp, cardOpxxHwH, cardEthernetPhyCpp, cardOpxxPhyCpp,\
-        requestPerPrimList
+        requestPerPrimList, perPrcsBase
     requestPerList = []
     requestPerPrimList = []
     LPerId = ''
@@ -74,6 +76,8 @@ def index(request):
         requestPerName = request.POST.get('requestPerName', None)
         requestPerId = request.POST.get('requestPerId', None)
         requestPrimId = request.POST.get('requestPrimId', None)
+        # needDrawText = request.POST.getlist('needDraw')
+        # needDraw = needDrawText[0] == 'needDraw'
         requestPerNameListTemp = re.split("[_/\\\\,.\-;:`~|<> \t]", requestPerName)
         requestPerNameListTemp = filter(None, requestPerNameListTemp)  # 去除空值
         requestPerIdListTemp = re.split("[_/\\\\,.\;:`|<> \t]", requestPerId)
@@ -119,6 +123,7 @@ def index(request):
         LDataType = getLDataType()
         LPerFb = getLPerFb(requestPerTabelName, requestPerFbId)
         XXXWs = getXXXWs()
+        XXXMo = getXXXMo()
 
         for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp):
             requestPerList.append({'name': requestPerNameTemp, 'id': requestPerIdTemp})
@@ -134,8 +139,8 @@ def index(request):
         setPerXXXCurEnd(PerXXXCur)
         setPerXXXHisEnd(PerXXXHis)
 
-        perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameListTemp)
-        perToolsH = getPerToolsH(requestPerTabelName, requestPerNameListTemp)
+        perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameListTemp, requestPrimNameListNew)
+        perToolsH = getPerToolsH(requestPerTabelName, requestPerNameListTemp, requestPrimNameListNew)
         toolFidCpp = getToolFidCpp(requestPerTabelName)
         MtnCmdDcCpp = getMtnCmdDcCpp(requestPerTabelName)
         NESvcCfgPerMonitorCfgCpp = getNESvcCfgPerMonitorCfgCpp(requestPerTabelName)
@@ -144,7 +149,7 @@ def index(request):
         NeSvcCfgLgCfgMngCpp = getNeSvcCfgLgCfgMngCpp(requestPerTabelName)
         perChssHelperCpp = getPerChssHelperCpp(requestPerTabelName)
         perChssModCpp = getPerChssModCpp(requestPerTabelName, requestPerFbId)
-        perChssModH = getPerChssModH(requestPerTabelName, requestPerObjTypeListId)
+        perChssModH = getPerChssModH(requestPerTabelName, requestPerNameListTemp)
         perNeModCpp = getPerNeModCpp(requestPerTabelName, requestPerNameListTemp)
         perNeModH = getPerNeModH(requestPerTabelName)
         CMakeListsTxt = getCMakeListsTxt(requestPerTabelName)
@@ -156,6 +161,7 @@ def index(request):
         cardOpxxHwH = getCardOpxxHwH(requestPerTabelName, requestPerNameListTemp)
         cardEthernetPhyCpp = getCardEthernetPhyCpp(requestPerTabelName)
         cardOpxxPhyCpp = getCardOpxxPhyCpp(requestPerTabelName)
+        perPrcsBase = getPerPrcsBase(requestPrimNameListNew, requestPrimIdListNew)
 
     return render(request, "index.html", {'tableName': requestPerTabelName, 'data': requestPerList, 'LperIdTd': LPerId,
                                           'primdData': requestPerPrimList,
@@ -163,7 +169,7 @@ def index(request):
                                           'PerXXXCurTd': PerXXXCur, 'PerXXXHisTd': PerXXXHis,
                                           'neBaseOtrXml': neBase, 'PerObjTypeList': PerObjTypeList,
                                           'DataTypeDef': DataTypeDef, 'LDataType': LDataType,
-                                          'LPerFb': LPerFb, 'XXXWs': XXXWs,
+                                          'LPerFb': LPerFb, 'XXXWs': XXXWs, 'XXXMo': XXXMo,
                                           'perToolsCpp': perToolsCpp, 'perToolsH': perToolsH,
                                           'toolFidCpp': toolFidCpp, 'MtnCmdDcCpp': MtnCmdDcCpp,
                                           'NESvcCfgPerMonitorCfgCpp': NESvcCfgPerMonitorCfgCpp,
@@ -177,7 +183,69 @@ def index(request):
                                           'cliApiAlarmperCPP': cliApiAlarmperCPP, 'cliApiAlarmperH': cliApiAlarmperH,
                                           'cliCmdMoncmmCpp': cliCmdMoncmmCpp, 'cliCmdSysCpp': cliCmdSysCpp,
                                           'cardOpxxHwCpp': cardOpxxHwCpp, 'cardOpxxHwH': cardOpxxHwH,
-                                          'cardEthernetPhyCpp': cardEthernetPhyCpp, 'cardOpxxPhyCpp': cardOpxxPhyCpp})
+                                          'cardEthernetPhyCpp': cardEthernetPhyCpp, 'cardOpxxPhyCpp': cardOpxxPhyCpp,
+                                          'perPrcsBase': perPrcsBase})
+
+
+
+def getPerPrcsBase(requestPrimNameList, requestPrimIdList):
+    outSrting = '不需要修改'
+    if len(requestPrimIdList) > 0:
+        primIdLast = requestPrimIdList[0]
+        index = 0
+        for primId in requestPrimIdList[1:]:
+            index += 1
+            if not (primId == (primIdLast + 1)):
+                primIdStart = requestPrimNameList[index]
+                outSrting = '''
+INT CPerProcessBase<PerNodeType, PerPrimType>::GetPrimHw()
+{
+	for (UShort offSet = 0; offSet < perFbInfoTable[m_fbType].primNum; ++offSet)
+	{
+		if (m_perPrimData[offSet].Length())
+		{
+				//...........
+						
+				else if (perFbInfoTable[m_fbType].idBase == LPerPrimId_''' + requestPrimNameList[0] + ''' && offSet > ''' + str(index) + ''')
+				{
+					tmp_primid = LPerPrimId_''' + primIdStart + ''' + offSet - ''' + str(index + 1) + '''; 	
+				}
+				//..........
+		}
+	}
+}'''
+
+            primIdLast = primId
+
+    return outSrting
+
+
+def hasCur(requestPerNameList):
+    isHasCur = False
+    for requestPerName in requestPerNameList:
+        if re.search(r'Cur$', requestPerName):
+            isHasCur = True
+            break
+
+    return isHasCur
+
+def isNeedCalc(requestPerNameList):
+    needCalc = False
+    for requestPerName in requestPerNameList:
+        if re.search(r'Min$', requestPerName):
+            needCalc = True
+            break
+        elif re.search(r'Max$', requestPerName):
+            needCalc = True
+            break
+        elif re.search(r'Mean$', requestPerName):
+            needCalc = True
+            break
+        elif re.search(r'^Cumulated', requestPerName):
+            needCalc = True
+            break
+
+    return needCalc
 
 def GetPrimNameAndId(requestPerNameList, requestPrimIdList):
     requestPrimNameListNew = []
@@ -567,19 +635,11 @@ int set_performance_monitor (struct utons_cli *cli, int argc, char **argv)
 			{
 				openAllItemFlag = 1;
 			}
-			
-			if (0 == strcmp(argv[5], "''' + requestPerNameList[0].lower() + '''"))
+			else
 			{
-			    perId = (Short)(IdNameNode::QueryId(argv[5],perIdNameList));
-			}'''
-    for requestPerNameTemp in requestPerNameList[1:]:
-        outString +='''
-			else if (0 == strcmp(argv[5], "''' + requestPerNameTemp.lower() + '''"))
-			{
-			    perId = (Short)(IdNameNode::QueryId(argv[5],perIdNameList));
-			}'''
+				perId = (Short)(IdNameNode::QueryId(argv[5],perIdNameList));
+			}
 
-    outString += '''
 		}
 
 		if (0 == strcmp(argv[6], "period"))
@@ -863,7 +923,16 @@ struct per_''' + requestPerTabelName.lower() + '''_cur
 	String   Fid;			
 '''
     for requestPerNameTemp in requestPerNameList:
-        outString += '''
+        if re.search(r'Min$', requestPerNameTemp):
+            pass
+        elif re.search(r'Max$', requestPerNameTemp):
+            pass
+        elif re.search(r'Mean$', requestPerNameTemp):
+            pass
+        elif re.search(r'^Cumulated', requestPerNameTemp):
+            pass
+        else:
+            outString += '''
 	Long64 ''' + requestPerNameTemp + ''';'''
 
     outString += '''
@@ -873,7 +942,16 @@ struct per_''' + requestPerTabelName.lower() + '''_cur
 
 		Fid=NULL;'''
     for requestPerNameTemp in requestPerNameList:
-        outString += '''
+        if re.search(r'Min$', requestPerNameTemp):
+            pass
+        elif re.search(r'Max$', requestPerNameTemp):
+            pass
+        elif re.search(r'Mean$', requestPerNameTemp):
+            pass
+        elif re.search(r'^Cumulated', requestPerNameTemp):
+            pass
+        else:
+            outString += '''
 		''' + requestPerNameTemp + ''' = 0;'''
 
     outString += '''
@@ -892,12 +970,12 @@ struct per_''' + requestPerTabelName.lower() + '''_cur
 	char* FormatInfo();	
 };
 
-
+//////////////////////////////////////
 
 INT per_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur>& per_''' + requestPerTabelName.lower() + '''_list, String expression=NULL);
 
 
-
+//////////////////////////////////////////
 
 struct per_''' + requestPerTabelName.lower() + '''_his
 {
@@ -951,7 +1029,7 @@ struct per_''' + requestPerTabelName.lower() + '''_his
 	char* FormatInfo();	
 };
 
-
+/////////////////////////////////////////
 
 INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_his>& per_''' + requestPerTabelName.lower() + '''_list, String expression=NULL);
 '''
@@ -963,12 +1041,12 @@ def getCliApiAlarmperCPP(requestPerTabelName, requestPerNameList):
     outString ='''
 #include "record_set_per''' + requestPerTabelName.lower() + '''cur.h"
 
-
+/////////////////////////////
 
 #include "record_set_per''' + requestPerTabelName.lower() + '''his.h"
 
 
-
+/////////////////////////
 
 
 char* per_''' + requestPerTabelName.lower() + '''_cur::FormatInfo()
@@ -978,8 +1056,17 @@ char* per_''' + requestPerTabelName.lower() + '''_cur::FormatInfo()
 	MY_SNPRINTF(buffer, sizeof(buffer),"%sFid:				 %s\\n",  buffer,(const char*)Fid);'''
 
     for requestPerNameTemp in requestPerNameList:
-        outString +='''
-	MY_SNPRINTF(buffer, sizeof(buffer),"%s ''' + requestPerNameTemp + ''':      %Ld\\n", buffer, ''' + requestPerNameTemp + ''');'''
+        if re.search(r'Min$', requestPerNameTemp):
+            pass
+        elif re.search(r'Max$', requestPerNameTemp):
+            pass
+        elif re.search(r'Mean$', requestPerNameTemp):
+            pass
+        elif re.search(r'^Cumulated', requestPerNameTemp):
+            pass
+        else:
+            outString +='''
+	MY_SNPRINTF_NA(''' + requestPerNameTemp + ''');'''
 
     outString += '''
 
@@ -1015,7 +1102,16 @@ INT per_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur>& 
 		i++, recSet.MoveNext())
 	{'''
     for requestPerNameTemp in requestPerNameList:
-        outString +='''
+        if re.search(r'Min$', requestPerNameTemp):
+            pass
+        elif re.search(r'Max$', requestPerNameTemp):
+            pass
+        elif re.search(r'Mean$', requestPerNameTemp):
+            pass
+        elif re.search(r'^Cumulated', requestPerNameTemp):
+            pass
+        else:
+            outString +='''
 		recSet.Get''' + requestPerNameTemp + '''(per_''' + requestPerTabelName.lower() + '''_list[i].''' + requestPerNameTemp + ''');'''
 
     outString += '''
@@ -1029,11 +1125,11 @@ INT per_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur>& 
 	}
 
 	return LRet_success;
-};
+}
 
 
 
-
+/////////////////////////////////////
 
 
 
@@ -1049,7 +1145,7 @@ char* per_''' + requestPerTabelName.lower() + '''_his::FormatInfo()
     for requestPerNameTemp in requestPerNameList:
         if not(re.search(r'Rate$', requestPerNameTemp)):
             outString +='''
-	MY_SNPRINTF(buffer, sizeof(buffer),"%s ''' + requestPerNameTemp + ''':      %Ld\\n", buffer, ''' + requestPerNameTemp + ''');'''
+	MY_SNPRINTF_NA(''' + requestPerNameTemp + ''');'''
 
     outString += '''
 
@@ -1110,7 +1206,7 @@ INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_hi
 	}
 
 	return LRet_success;
-};'''
+}'''
 
     return outString
 
@@ -1135,6 +1231,7 @@ public:
 
 
 def getPerNeModCpp(requestPerTabelName, requestPerNameList):
+    needCalc = isNeedCalc(requestPerNameList)
     outString =  '''
 CPerNe::CPerNe(const NSPMag::MODULEHANDLE hm, void* pCfg)
 {
@@ -1206,6 +1303,8 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 {
 	MPer''' + requestPerTabelName + '''* pData''' + requestPerTabelName + ''' = NULL;
 	
+	//................
+	
 	switch (pNode->type)
 	{
 	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
@@ -1221,7 +1320,15 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 	}
 }
 
+///////////////////////////////
+'''
 
+    if needCalc:
+        className = 'SPer' + requestPerTabelName
+    else:
+        className = 'SPerPrim' + requestPerTabelName
+
+    outString += '''
 
 void CPerNe::ProcPerHisTable(SEQUENCE<MPerHistory>& data, const SEQUENCE<Long> & flag)
 {
@@ -1230,7 +1337,7 @@ void CPerNe::ProcPerHisTable(SEQUENCE<MPerHistory>& data, const SEQUENCE<Long> &
 	{
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 		sData.dataType = TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable);
-		WritePerHisTable((CRecordSetPer''' + requestPerTabelName + '''His*)p1, (MPer''' + requestPerTabelName + '''*)p2, (SPerPrim''' + requestPerTabelName + '''*)p3, sData, data, flag);
+		WritePerHisTable((CRecordSetPer''' + requestPerTabelName + '''His*)p1, (MPer''' + requestPerTabelName + '''*)p2, (''' + className + '''*)p3, sData, data, flag);
 #endif	
 	}
 }
@@ -1246,14 +1353,24 @@ void CPerNe::ClearHistroicalPerTalbe()
 }'''
     return outString
 
-def getPerChssModH(requestPerTabelName, requestPerObjTypeListId):
-    return '''
+def getPerChssModH(requestPerTabelName, requestPerNameList):
+    needCalc = isNeedCalc(requestPerNameList)
+    if needCalc:
+        outString = '''
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+typedef CPerNodeUat<SPerPrim''' + requestPerTabelName + ''', SPer''' + requestPerTabelName + ''', SPerHis''' + requestPerTabelName + '''> CPerNode''' + requestPerTabelName.upper() + ''';
+typedef CPerProcessUat<CPerNode''' + requestPerTabelName.upper() + ''', SPerPrim''' + requestPerTabelName + ''', SPer''' + requestPerTabelName + '''> CPerProcess''' + requestPerTabelName.upper() + ''';
+#endif'''
+    else:
+        outString = '''
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 typedef CPerNode<SPerPrim''' + requestPerTabelName + ''', SPerPrim''' + requestPerTabelName + ''', SPerHis''' + requestPerTabelName + '''> CPerNode''' + requestPerTabelName.upper() + ''';
 typedef CPerProcessBase<CPerNode''' + requestPerTabelName.upper() + ''', SPerPrim''' + requestPerTabelName + '''> CPerProcess''' + requestPerTabelName.upper() + ''';
-#endif
+#endif'''
 
+    outString += '''
 
+////////////////////////////////
 
 class CPerChss : public CCardCmmUnit
 {
@@ -1262,6 +1379,8 @@ protected:
 	CPerProcess''' + requestPerTabelName.upper() + '''* m_pPer''' + requestPerTabelName.upper() + ''';
 #endif
 };'''
+
+    return outString
 
 
 def getPerChssModCpp(requestPerTabelName, requestPerFbId):
@@ -1380,7 +1499,7 @@ INT CPerChss::ClearCurPer(Long64 fid, Long type, const Octet period, String expr
 	{
 	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
-		PER_PROC_CLR_CUR_DATA(''' + requestPerTabelName.upper() + ''', fid, period, perId);
+		PER_PROC_CLR_CUR_DATA(''' + requestPerTabelName.upper() + ''', fid, period);
 #endif
 		break;
 	}
@@ -1643,7 +1762,8 @@ extern INT CvtFid2Long64ToStr(const Long64 llFid, const PerObjTypeList type, Str
 	}
 }'''
 
-def getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameList):
+def getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameList, requestPrimNameList):
+    needCalc = isNeedCalc(requestPerNameList)
     outString = '''
 const Short perIdList[][MAX_PRIM_COUNT] = 
 {
@@ -1658,20 +1778,20 @@ const Short perIdList[][MAX_PRIM_COUNT] =
 	},  //''' + requestPerTabelName.lower() + '''     PerObjTypeList_''' + requestPerTabelName.lower() + ''' = ''' + requestPerObjTypeListId + '''
 };
 
-
+/////////////////////////////////
 
 '''
     outString +='''
 const PER_FB_INFO_ITEM perFbInfoTable[LPerFb_max] = 
 {
 	{
-		LPerId_''' + requestPerNameList[0] + ''', ''' + str(len(requestPerNameList)) + ''', 0,
+		LPerPrimId_''' + requestPrimNameList[0] + ''', ''' + str(len(requestPrimNameList)) + ''', 0,
  		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上本地检测的告警列表
  		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上远端缺陷的告警列表
 	},  //''' + requestPerTabelName.lower() + '''     LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerFbId + '''
 };
 
-
+//////////////////////////////////////
 
 '''
     outString += '''
@@ -1685,7 +1805,7 @@ INT PerUtility::PerObjType2FidType( const PerObjTypeList objType, LFidType& fidT
 	}
 }
 
-
+/////////////////////////////////
 
 '''
     outString += '''
@@ -1693,7 +1813,19 @@ INT PerUtility::PerObjType2FidType( const PerObjTypeList objType, LFidType& fidT
 /***********************************************************/
 /* ''' + requestPerTabelName + ''' performance性能                               */
 /***********************************************************/
+'''
+    for requestPerNameTemp in requestPerNameList:
+        if re.search(r'Min$', requestPerNameTemp):
+            subName = re.sub(r'Min$', '', requestPerNameTemp)
+            outString += '''
+const Long64 ''' + requestPerTabelName.upper() + '''_''' + subName.upper() + '''_MIN = -1000;'''
+        elif re.search(r'Max$', requestPerNameTemp):
+            subName = re.sub(r'Max$', '', requestPerNameTemp)
+            outString += '''
+const Long64 ''' + requestPerTabelName.upper() + '''_''' + subName.upper() + '''_MAX = 1000;'''
 
+    if needCalc:
+        outString += '''
 SPerPrim''' + requestPerTabelName + '''::SPerPrim''' + requestPerTabelName + '''()
 {
 	Init();
@@ -1704,7 +1836,68 @@ void SPerPrim''' + requestPerTabelName + '''::Init()
 	memset(this, 0, sizeof(SPerPrim''' + requestPerTabelName + '''));
 }
 
-void SPerPrim''' + requestPerTabelName + '''::InitItem(Short perId)
+void SPerPrim''' + requestPerTabelName + '''::Update( SPerPrim''' + requestPerTabelName + '''& newData )
+{'''
+        for requestPrimName in requestPrimNameList:
+            outString += '''
+	''' + requestPrimName + ''' = newData.''' + requestPrimName + ''';'''
+        outString += '''}
+
+void SPerPrim''' + requestPerTabelName + '''::MakeInfo( String dataBuf, Long len )
+{
+	if (NULL == dataBuf)
+	{
+		return;
+	}
+	
+	memset(dataBuf, 0, len);'''
+        for requestPrimName in requestPrimNameList:
+            outString += '''
+	PER_PRIM_INFO(''' + requestPrimName + ''');'''
+
+        outString += '''
+}
+'''
+
+    if needCalc:
+        className = 'SPer' + requestPerTabelName
+    else:
+        className = 'SPerPrim' + requestPerTabelName
+
+    outString += '''
+''' + className + '''::''' + className + '''()
+{
+	Init();
+}
+
+void ''' + className + '''::Init()
+{
+	memset(this, 0, sizeof(''' + className + '''));
+'''
+    for requestPerNameTemp in requestPerNameList:
+        if re.search(r'Min$', requestPerNameTemp):
+            subName = re.sub(r'Min$', '', requestPerNameTemp)
+            outString += '''
+	''' + requestPerNameTemp + ''' = ''' + requestPerTabelName.upper() + '''_''' + subName.upper() + '''_MIN;'''
+        elif re.search(r'Max$', requestPerNameTemp):
+            subName = re.sub(r'Max$', '', requestPerNameTemp)
+            outString += '''
+   	''' + requestPerNameTemp + ''' = ''' + requestPerTabelName.upper() + '''_''' + subName.upper() + '''_MAX;'''
+
+    if needCalc:
+        outString += '''
+    
+	//TODO:如果有绘图的需要在这里添加以下类似代码
+	//for (int i = 0; i < PER_SEC_15M; i++)
+	//{
+	//	OffsetStatArray[i] = PTPTIME_OFFSET_MAX;
+	//}
+	//OffsetIndex = 0;'''
+
+    outString += '''
+}
+
+void ''' + className + '''::InitItem(Short perId)
 {
 	switch(perId)
 	{'''
@@ -1720,8 +1913,30 @@ void SPerPrim''' + requestPerTabelName + '''::InitItem(Short perId)
 		break;
 	}
 }
+'''
 
-void SPerPrim''' + requestPerTabelName + '''::Calc( SPerPrim''' + requestPerTabelName + '''& prim, Long* alm, Long& Cur, char* Cnt, Long& CurExt, char* CntExt, Long& feCur, char* feCnt, Long vel )
+    isHasCur = hasCur(requestPerNameList)
+    if isHasCur:
+        outString += '''
+void ''' + className + '''::CalcValidVal( Long64& validVal, const Long64 val, const Long64 minVal, const Long64 maxVal )
+{
+	if (minVal > val)
+	{
+		validVal = minVal;
+	}
+	else if (maxVal < val)
+	{
+		validVal = maxVal;
+	}
+	else
+	{
+		validVal = val;
+	}
+}
+'''
+
+    outString += '''
+void ''' + className + '''::Calc( SPerPrim''' + requestPerTabelName + '''& prim, Long* alm, Long& Cur, char* Cnt, Long& CurExt, char* CntExt, Long& feCur, char* feCnt, Long vel )
 {
 	NSP_TEMP_UNUSED_ARG(CurExt);
 	NSP_TEMP_UNUSED_ARG(CntExt);
@@ -1731,11 +1946,20 @@ void SPerPrim''' + requestPerTabelName + '''::Calc( SPerPrim''' + requestPerTabe
 	NSP_TEMP_UNUSED_ARG(Cur);
 	NSP_TEMP_UNUSED_ARG(alm);
 	NSP_TEMP_UNUSED_ARG(vel);
+'''
+
+    if isHasCur:
+        for requestPerNameTemp in requestPerNameList:
+            if re.search(r'Cur$', requestPerNameTemp):
+                subName = re.sub(r'Cur$', '', requestPerNameTemp)
+                outString += '''
+	CalcValidVal(''' + requestPerNameTemp + ''', prim.''' + subName + ''', ''' + requestPerTabelName.upper() + '''_''' + subName.upper() + '''_MIN, ''' + requestPerTabelName.upper() + '''_''' + subName.upper() + '''_MAX);'''
+
+    outString += '''
 }
 
-void SPerPrim''' + requestPerTabelName + '''::Update( SPerPrim''' + requestPerTabelName + '''& newData )
-{
-	//如果非累加值，使用PER_PRIM_UPDATE_NEW'''
+void ''' + className + '''::Update( ''' + className + '''& newData )
+{'''
 
     hasRate = False
     for requestPerNameTemp in requestPerNameList:
@@ -1746,28 +1970,62 @@ void SPerPrim''' + requestPerTabelName + '''::Update( SPerPrim''' + requestPerTa
 	setRate(''' + requestPerNameTemp + '''Array, 10, ''' + requestPerNameTemp + ''', m_cur);
             '''
         else:
-            addStringTemp = '''
+            if (re.search(r'Cur$', requestPerNameTemp)):
+                addStringTemp = '''
+	PER_PRIM_UPDATE_NEW(''' + requestPerNameTemp + ''');'''
+            elif (re.search(r'Min$', requestPerNameTemp)):
+                addStringTemp = '''
+	PER_PRIM_UPDATE_MIN(''' + requestPerNameTemp + ''', newData.''' + re.sub(r'Min$', '', requestPerNameTemp) + '''Cur);'''
+            elif (re.search(r'Max$', requestPerNameTemp)):
+                addStringTemp = '''
+	PER_PRIM_UPDATE_MAX(''' + requestPerNameTemp + ''', newData.''' + re.sub(r'Max$', '', requestPerNameTemp) + '''Cur);'''
+            else:
+                addStringTemp = '''
 	PER_PRIM_ADD_NEW(''' + requestPerNameTemp + ''');'''
+
         outString += addStringTemp
 
     if(hasRate):
         outString += '''
 	m_cur = (++m_cur)%10;'''
 
+    if needCalc:
+        outString += '''
+    
+    //TODO:如果有绘图的需要在这里添加以下类似代码
+   	//if (OffsetCurMonStat)
+	//{
+	//	OffsetCur = newData.OffsetCur;
+	//	OffsetStatArray[OffsetIndex] = (Short)newData.OffsetCur;
+	//	OffsetIndex = (OffsetIndex+1) % PER_SEC_15M;
+	//}'''
+
     outString += '''
 }
 
-void SPerPrim''' + requestPerTabelName + '''::Cur2His( SPerPrim''' + requestPerTabelName + '''* pRec, const Octet period )
+void ''' + className + '''::Cur2His( ''' + className + '''* pRec, const Octet period )
 {'''
     for requestPerNameTemp in requestPerNameList:
         if not(re.search(r'Rate$', requestPerNameTemp)):
             outString += '''
 	PER_PRIM_CUR2HIS_DEFECT64_NEW(pRec, ''' + requestPerNameTemp + ''');'''
 
-    outString +='''
+    if needCalc:
+        outString +='''
+    
+    //TODO:如果有绘图的需要在这里添加以下类似代码
+	//if (OffsetCurMonStat == 1)
+	//{
+	//	for (int i = 0; i < PER_SEC_15M; i++)
+	//	{
+	//		pRec->OffsetStatArray[i] = OffsetStatArray[i];
+	//	}
+	//}'''
+
+    outString += '''
 }
 
-void SPerPrim''' + requestPerTabelName + '''::SetPerItmMonCfg(Short perId,Boolean MonStat)
+void ''' + className + '''::SetPerItmMonCfg(Short perId,Boolean MonStat)
 {
 	switch(perId)
 	{'''
@@ -1784,7 +2042,7 @@ void SPerPrim''' + requestPerTabelName + '''::SetPerItmMonCfg(Short perId,Boolea
 	}
 }
 
-void SPerPrim''' + requestPerTabelName + '''::AddToRecordSet( const String sFid, const Octet period, void* pRec)
+void ''' + className + '''::AddToRecordSet( const String sFid, const Octet period, void* pRec)
 {
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(pRec);
@@ -1806,6 +2064,14 @@ void SPerPrim''' + requestPerTabelName + '''::AddToRecordSet( const String sFid,
             addRateStringTemp += '''
 		''' + requestPerNameTemp + ''' = getRate(''' + requestPerNameTemp + '''Array, 10);
 		PER_PRIM_SET_REC_NEW(pRow, ''' + requestPerNameTemp + ''');'''
+        elif (re.search(r'Min$', requestPerNameTemp)):
+            pass
+        elif (re.search(r'Max$', requestPerNameTemp)):
+            pass
+        elif re.search(r'Mean$', requestPerNameTemp):
+            pass
+        elif re.search(r'^Cumulated', requestPerNameTemp):
+            pass
         else:
             outString +='''
 	PER_PRIM_SET_REC_NEW(pRow, ''' + requestPerNameTemp + ''');'''
@@ -1824,7 +2090,7 @@ void SPerPrim''' + requestPerTabelName + '''::AddToRecordSet( const String sFid,
 #endif
 }
 
-void SPerPrim''' + requestPerTabelName + '''::SetHisRec( void* pRec )
+void ''' + className + '''::SetHisRec( void* pRec )
 {
 	NSP_TEMP_UNUSED_ARG(pRec);
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
@@ -1841,7 +2107,7 @@ void SPerPrim''' + requestPerTabelName + '''::SetHisRec( void* pRec )
 #endif
 }
 
-void SPerPrim''' + requestPerTabelName + '''::CreateAnyData( Any& data )
+void ''' + className + '''::CreateAnyData( Any& data )
 {
 	MPer''' + requestPerTabelName + ''' per;
     '''
@@ -1851,11 +2117,20 @@ void SPerPrim''' + requestPerTabelName + '''::CreateAnyData( Any& data )
             outString += '''
 	PER_VALUE_SET(per, ''' + requestPerNameTemp + ''');'''
 
+    if needCalc:
+        outString += '''
+    
+    //TODO:如果有绘图的需要在这里添加以下类似代码
+	//for (int i = 0; i < PER_SEC_15M; i++)
+	//{
+	//	per.OffsetStatArray[i] = OffsetStatArray[i];
+	//}
+	data.Insert(TID_TO_TEID(TID_MPer''' + requestPerTabelName + '''), &per, TAG_CMM_PER);'''
+
     outString += '''
-	data.Insert(TID_TO_TEID(TID_MPer''' + requestPerTabelName + '''), &per, TAG_CMM_PER);
 }
 
-void SPerPrim''' + requestPerTabelName + '''::JudgeCrossThr( const Octet period, Long64 fid, MPerThr* thr, SEQUENCE<MAlmChss>& alm )
+void ''' + className + '''::JudgeCrossThr( const Octet period, Long64 fid, MPerThr* thr, SEQUENCE<MAlmChss>& alm )
 {
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(fid);
@@ -1863,21 +2138,24 @@ void SPerPrim''' + requestPerTabelName + '''::JudgeCrossThr( const Octet period,
 	NSP_TEMP_UNUSED_ARG(alm);
 }
 
-void SPerPrim''' + requestPerTabelName + '''::ClearCrossThrAlm( const Octet period, Long64 fid, SEQUENCE<MAlmChss>& alm )
+void ''' + className + '''::ClearCrossThrAlm( const Octet period, Long64 fid, SEQUENCE<MAlmChss>& alm )
 {
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(fid);
 	NSP_TEMP_UNUSED_ARG(alm);
 }
 
-void SPerPrim''' + requestPerTabelName + '''::ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChss>& alm)
+void ''' + className + '''::ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChss>& alm)
 {
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(fid);
 	NSP_TEMP_UNUSED_ARG(perid);
 	NSP_TEMP_UNUSED_ARG(alm);
 }
-void SPerPrim''' + requestPerTabelName + '''::MakeInfo( String dataBuf, Long len )
+'''
+    if not needCalc:
+        outString += '''
+void ''' + className + '''::MakeInfo( String dataBuf, Long len )
 {
 	if (NULL == dataBuf)
 	{
@@ -1887,33 +2165,63 @@ void SPerPrim''' + requestPerTabelName + '''::MakeInfo( String dataBuf, Long len
 	memset(dataBuf, 0, len);
     '''
 
-    for requestPerNameTemp in requestPerNameList:
-        if not (re.search(r'Rate$', requestPerNameTemp)):
-            outString += '''
+        for requestPerNameTemp in requestPerNameList:
+            if not (re.search(r'Rate$', requestPerNameTemp)):
+                outString += '''
 	PER_PRIM_INFO(''' + requestPerNameTemp + ''');'''
 
+        outString += '''
+}'''
     outString += '''
-}
 #endif'''
 
     return outString
 
 
-def getPerToolsH(requestPerTabelName, requestPerNameList):
+def getPerToolsH(requestPerTabelName, requestPerNameList, requestPrimNameList):
+    needCalc = isNeedCalc(requestPerNameList)
+
     outString = '''
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 #include "record_set_per''' + requestPerTabelName.lower() + '''cur.h"
 #include "record_set_per''' + requestPerTabelName.lower() + '''his.h"
 #endif
 
+////////////////////////////////
 
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 
 /////////////////////////////////////////////////////////////////////////
 //	''' + requestPerTabelName + ''' performance data define 
 /////////////////////////////////////////////////////////////////////////
-
+'''
+    if needCalc:
+        outString += '''
 struct SPerPrim''' + requestPerTabelName + '''
+{'''
+        for requestPrimName in requestPrimNameList:
+            outString += '''
+	Long64 ''' + requestPrimName + ''';'''
+
+        outString += '''
+
+    SPerPrim''' + requestPerTabelName + '''();
+
+    void Init();
+
+	void Update(SPerPrim''' + requestPerTabelName + '''& newData);
+
+	void MakeInfo(String dataBuf, Long len);
+};
+'''
+
+    if needCalc:
+        className = 'SPer' + requestPerTabelName
+    else:
+        className = 'SPerPrim' + requestPerTabelName
+
+    outString += '''
+struct ''' + className + '''
 {'''
 
     addStringTemp = ''
@@ -1933,24 +2241,37 @@ struct SPerPrim''' + requestPerTabelName + '''
 '''
         outString += addStringTemp
 
+    if needCalc:
+        outString += '''
+
+	//TODO:如果有绘图的需要在这里添加以下类似代码
+	//Short OffsetStatArray[PER_SEC_15M];
+	//int    OffsetIndex;'''
+
     for requestPerNameTemp in requestPerNameList:
         outString += '''
 	Boolean ''' + requestPerNameTemp + '''MonStat;'''
 
     outString +='''
 
-    SPerPrim''' + requestPerTabelName + '''();
-
+    ''' + className + '''();
 
 	void Init();
 
 	void InitItem(Short perId);
+'''
 
-	void Calc( SPerPrim''' + requestPerTabelName + '''& prim, Long* alm, Long& Cur, char* Cnt, Long& CurExt, char* CntExt, Long& feCur, char* feCnt, Long vel );
+    if hasCur(requestPerNameList):
+        outString += '''
+	void CalcValidVal(Long64& validVal, const Long64 val, const Long64 minVal, const Long64 maxVal);
+'''
 
-	void Update(SPerPrim''' + requestPerTabelName + '''& newData);
+    outString += '''
+	void Calc( SPerPrim''' + requestPerTabelName + '''& prim, Long* alm, Long& Cur, char* Cnt, Long& CurExt, char* CntExt, Long& feCur, char* feCnt, Long vel);
 
-	void Cur2His(SPerPrim''' + requestPerTabelName + '''* pRec, const Octet period);
+	void Update(''' + className + '''& newData);
+
+	void Cur2His(''' + className + '''* pRec, const Octet period);
 
 	void AddToRecordSet( const String sFid, const Octet period, void* pRec);
 
@@ -1958,14 +2279,18 @@ struct SPerPrim''' + requestPerTabelName + '''
 
 	void CreateAnyData(Any& data);
 
-	void JudgeCrossThr(const Octet period, Long64 fid, MPerThrCfg* thr, SEQUENCE<MAlmChss>& alm);
+	void JudgeCrossThr(const Octet period, Long64 fid, MPerThr* thr, SEQUENCE<MAlmChss>& alm);
 
 	void ClearCrossThrAlm(const Octet period, Long64 fid, SEQUENCE<MAlmChss>& alm);
 
 	void ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChss>& alm);
-
+'''
+    if not needCalc:
+        outString += '''
 	void MakeInfo(String dataBuf, Long len);
+'''
 
+    outString += '''
 	void SetPerItmMonCfg(Short perId,Boolean MonStat);
 	
 };
@@ -1977,7 +2302,7 @@ struct SPerHis''' + requestPerTabelName + '''
 	Boolean isNa;
 	Boolean isDefect;
 	time_t endTime;
-	SPerPrim''' + requestPerTabelName + ''' per;
+	''' + className + ''' per;
 };
 #endif
 '''
@@ -1991,6 +2316,12 @@ def getXXXWs():
 	<Spec>''' + PerXXXHis['name'] + '''.VX.ts</Spec>
     '''
 
+def getXXXMo():
+    global PerXXXCur
+    global PerXXXHis
+    return '''
+	  <String val="''' + PerXXXCur['name'] + '''.Vx"/>
+	  <String val="''' + PerXXXHis['name'] + '''.Vx"/>'''
 
 def getLPerFb(requestPerTabelName, requestPerFbId):
     return '''
@@ -2007,10 +2338,10 @@ def getLPerFb(requestPerTabelName, requestPerFbId):
               <val teid="String" val="中文注释"/>
             </Any>
             <Any>
-              <val teid="String" val="''' + requestPerTabelName + '''"/>
+              <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
             </Any>
             <Any>
-              <val teid="String" val="''' + requestPerTabelName + '''"/>
+              <val teid="String" val="''' + requestPerTabelName.lower() + '''"/>
             </Any>
           </val>
         </val>
@@ -2370,7 +2701,7 @@ def setPerXXXCurStart(PerXXXCur, requestPerTabelName):
 <?xml version="1.0" encoding="UTF-8"?>
 
 <ObjectPersistSpace>
-  <Spec id="Per''' + requestPerTabelName + '''Cur.VX" acl="0" sh="per:per''' + requestPerTabelName + '''Cur">
+  <Spec id="Per''' + requestPerTabelName + '''Cur.VX" acl="0" sh="per:Per''' + requestPerTabelName + '''Cur">
     <disp>
       <String val="英文注释"/>
       <String val="中文注释"/>
@@ -2528,3 +2859,4 @@ def getLPerId(requestPerIdTemp, requestPerNameTemp):
           </val>
         </Any>'''
     return LPerIdTemp
+
