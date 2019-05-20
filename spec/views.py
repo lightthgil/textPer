@@ -62,7 +62,6 @@ def index(request):
         requestPerPrimList, perPrcsBase
     requestPerList = []
     requestPerPrimList = []
-    LPerId = ''
     PerIdUnit = ''
     LPerPrimId = ''
     PerXXXCur = {'name': '', 'data': ''}
@@ -117,7 +116,6 @@ def index(request):
 
         setPerXXXCurStart(PerXXXCur, requestPerTabelName)
         setPerXXXHisStart(PerXXXHis, requestPerTabelName)
-        neBase = getNeBaseOtrStart(requestPerTabelName)
         PerObjTypeList = getPerObjTypeList(requestPerTabelName, requestPerObjTypeListId)
         DataTypeDef = getDataTypeDef()
         LDataType = getLDataType()
@@ -127,17 +125,17 @@ def index(request):
 
         for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameListTemp, requestPerIdListTemp):
             requestPerList.append({'name': requestPerNameTemp, 'id': requestPerIdTemp})
-            LPerId += getLPerId(requestPerIdTemp, requestPerNameTemp)
             PerIdUnit += getPerIdUnit(requestPerIdTemp)
             PerXXXCur['data'] += getPerXXXCurData(requestPerNameTemp)
             PerXXXHis['data'] += getPerXXXHisData(requestPerNameTemp)
-            neBase += getNeBaseOtrData(requestPerNameTemp)
 
+        LPerId = getLPerId(requestPerIdListTemp, requestPerNameListTemp)
         LPerPrimId = getLPerPrimId(requestPrimNameListNew, requestPrimIdListNew)
 
-        neBase += getNeBaseOtrEnd(requestPerTabelName)
+
         setPerXXXCurEnd(PerXXXCur)
         setPerXXXHisEnd(PerXXXHis)
+        neBase = getNeBaseOtr(requestPerTabelName, requestPerNameListTemp)
 
         perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameListTemp, requestPrimNameListNew)
         perToolsH = getPerToolsH(requestPerTabelName, requestPerNameListTemp, requestPrimNameListNew)
@@ -157,7 +155,7 @@ def index(request):
         cliApiAlarmperH = getCliApiAlarmperH(requestPerTabelName, requestPerNameListTemp)
         cliCmdMoncmmCpp = getCliCmdMoncmmCpp(requestPerTabelName, requestPerNameListTemp)
         cliCmdSysCpp = getCliCmdSysCpp(requestPerTabelName)
-        cardOpxxHwCpp = getCardOpxxHwCpp(requestPerTabelName, requestPrimNameListNew)
+        cardOpxxHwCpp = getCardOpxxHwCpp(requestPerTabelName, requestPrimNameListNew, requestPrimIdListNew)
         cardOpxxHwH = getCardOpxxHwH(requestPerTabelName, requestPrimNameListNew)
         cardEthernetPhyCpp = getCardEthernetPhyCpp(requestPerTabelName)
         cardOpxxPhyCpp = getCardOpxxPhyCpp(requestPerTabelName)
@@ -196,7 +194,7 @@ def getPerPrcsBase(requestPrimNameList, requestPrimIdList):
         for primId in requestPrimIdList[1:]:
             index += 1
             if not (primId == (primIdLast + 1)):
-                primIdStart = requestPrimNameList[index]
+                primNameStart = requestPrimNameList[index]
                 outSrting = '''
 INT CPerProcessBase<PerNodeType, PerPrimType>::GetPrimHw()
 {
@@ -206,9 +204,9 @@ INT CPerProcessBase<PerNodeType, PerPrimType>::GetPrimHw()
 		{
 				//...........
 						
-				else if (perFbInfoTable[m_fbType].idBase == LPerPrimId_''' + requestPrimNameList[0] + ''' && offSet > ''' + str(index) + ''')
+				else if (perFbInfoTable[m_fbType].idBase == LPerPrimId_''' + requestPrimNameList[0] + ''' && offSet > ''' + str(index - 1) + ''')
 				{
-					tmp_primid = LPerPrimId_''' + primIdStart + ''' + offSet - ''' + str(index + 1) + '''; 	
+					tmp_primid = LPerPrimId_''' + primNameStart + ''' + offSet - ''' + str(index) + '''; 	
 				}
 				//..........
 		}
@@ -322,6 +320,7 @@ class CCardHwOPXX : public CCardHw
 {
 public:
 	INT GetPerPrimIdData(UShort primId, SEQUENCE<TPer>& data, Long flag);
+	INT Get''' + requestPerTabelName + '''PrimPer(UShort primId, TPer &data);
 
 	//''' + requestPerTabelName.lower() + ''' 性能
 	INT Init''' + requestPerTabelName + '''Per(Long fidType, UFid uFid, Long objType);
@@ -342,7 +341,7 @@ public:
 
     return outString
 
-def getCardOpxxHwCpp(requestPerTabelName, requestPrimNameList):
+def getCardOpxxHwCpp(requestPerTabelName, requestPrimNameList, requestPrimIdList):
     # requestPerNameList = filter(subStrRate, requestPerNameList)
 
     outString = '''
@@ -418,51 +417,79 @@ INT CCardHwOPXX::GetPerPrimIdData(UShort primId, SEQUENCE<TPer>& data, Long flag
 	ULong j = 0;
 	ULong len = data.Length();
 	INT ret = LRet_success;
+'''
 
-	else if (primId >= LPerPrimId_''' + requestPrimNameList[0] + ''' && primId <= LPerPrimId_''' + requestPrimNameList[-1] + ''')
+    primRange = 'else if ('
+    if len(requestPrimIdList) > 0:
+        primNameLast = requestPrimNameList[0]
+        primIdLast = requestPrimIdList[0]
+        index = 0
+        for primId in requestPrimIdList[1:]:
+            if not (primId == (primIdLast + 1)):
+                primRange += '(primId >= LPerPrimId_' + primNameLast + ' && primId <= LPerPrimId_' + requestPrimNameList[index - 1] + ') ||\n'
+                primNameLast = requestPrimNameList[index]
+            primIdLast = primId
+            index += 1
+
+        if not (primNameLast == requestPrimNameList[0]):
+            primRange += '		'
+        primRange += '(primId >= LPerPrimId_' + primNameLast + ' && primId <= LPerPrimId_' + requestPrimNameList[-1] + '))'
+
+    outString += '''
+	''' + primRange + '''
 	{
-		int pernum = COUNTOF(g_a''' + requestPerTabelName + '''PerTab);
-		for (i = 0; i < pernum; ++i)
+		for (i = 0; i < data.Length(); ++i)
 		{
-			if (primId == g_a''' + requestPerTabelName + '''PerTab[i].perIdx) // 找到待查的性能id
+			ret = Get''' + requestPerTabelName + '''PrimPer(primId, data[i]);
+		}
+	}
+}
+
+INT CCardHwOPXX::Get''' + requestPerTabelName + '''PrimPer(UShort primId, TPer &data)
+{
+	INT ret = LRet_success;
+	TCmmPer per;
+	INT i = 0;
+	ULong j = 0;
+	int pernum = COUNTOF(g_a''' + requestPerTabelName + '''PerTab);
+	for (i = 0; i < pernum; ++i)
+	{
+		if (primId == g_a''' + requestPerTabelName + '''PerTab[i].perIdx) // 找到待查的性能id
+		{
+			per.Id = getLocalIdxforPer(data.fid.fid.value);
+
+			if (per.Id < k_NUM_IF) //port is based 0
 			{
-				for (j = 0; j < len; ++j)
+				ret = (this->*g_a''' + requestPerTabelName + '''PerTab[i].pFunc)(per);
+
+				if (LRet_success == ret)
 				{
-					per.Id = getLocalIdxforPer(data[j].fid.''' + requestPerTabelName.lower() + '''Fid.portindex);
-
-					if (per.Id < k_NUM_IF) //port is based 0
-					{
-						ret = (this->*g_a''' + requestPerTabelName + '''PerTab[i].pFunc)(per);
-
-						if (LRet_success == ret)
-						{
-							data[j].value = per.Value;
-						}
-						else
-						{
-							data[j].value = 0;
-							data[j].flag = LRet_objectExisted;
-						}
-
-						if (g_''' + requestPerTabelName + '''PerAllPrint || (primId == g_''' + requestPerTabelName + '''PerPrimIdPrint))
-						{
-							ULong PerValue32L = per.Value & 0xFFFFFFFF;
-							ULong PerValue32H = (per.Value >> 32) & 0xFFFFFFFF;
-							printf("Get the PortIndex=%d PrimId=%d PerValue[H]=%u PerValue[L]=%u ret=%d\\n", per.Id, primId, PerValue32H, PerValue32L, ret);
-						}
-					}
-					else
-					{
-						data[j].value = 0;
-						data[j].flag = LRet_objectExisted;
-					}
+					data.value = per.Value;
 				}
+				else
+				{
+					data.value = 0;
+					data.flag = LRet_objectExisted;
+				}
+
+				if (g_''' + requestPerTabelName + '''PerAllPrint || (primId == g_''' + requestPerTabelName + '''PerPrimIdPrint))
+				{
+					ULong PerValue32L = per.Value & 0xFFFFFFFF;
+					ULong PerValue32H = (per.Value >> 32) & 0xFFFFFFFF;
+					printf("Get the PortIndex=%d PrimId=%d PerValue[H]=%u PerValue[L]=%u ret=%d\\n", per.Id, primId, PerValue32H, PerValue32L, ret);
+				}
+			}
+			else
+			{
+				data.value = 0;
+				data.flag = LRet_objectExisted;
 			}
 		}
 	}
 
 	return ret;
 }
+
 
 ////////////////
 
@@ -929,8 +956,6 @@ struct per_''' + requestPerTabelName.lower() + '''_cur
             pass
         elif re.search(r'Mean$', requestPerNameTemp):
             pass
-        elif re.search(r'^Cumulated', requestPerNameTemp):
-            pass
         else:
             outString += '''
 	Long64 ''' + requestPerNameTemp + ''';'''
@@ -947,8 +972,6 @@ struct per_''' + requestPerTabelName.lower() + '''_cur
         elif re.search(r'Max$', requestPerNameTemp):
             pass
         elif re.search(r'Mean$', requestPerNameTemp):
-            pass
-        elif re.search(r'^Cumulated', requestPerNameTemp):
             pass
         else:
             outString += '''
@@ -1062,8 +1085,6 @@ char* per_''' + requestPerTabelName.lower() + '''_cur::FormatInfo()
             pass
         elif re.search(r'Mean$', requestPerNameTemp):
             pass
-        elif re.search(r'^Cumulated', requestPerNameTemp):
-            pass
         else:
             outString +='''
 	MY_SNPRINTF_NA(''' + requestPerNameTemp + ''');'''
@@ -1108,8 +1129,6 @@ INT per_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur>& 
             pass
         elif re.search(r'Mean$', requestPerNameTemp):
             pass
-        elif re.search(r'^Cumulated', requestPerNameTemp):
-            pass
         else:
             outString +='''
 		recSet.Get''' + requestPerNameTemp + '''(per_''' + requestPerTabelName.lower() + '''_list[i].''' + requestPerNameTemp + ''');'''
@@ -1117,8 +1136,8 @@ INT per_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_cur>& 
     outString += '''
 		recSet.GetFid(DbStr);
 				
-		sscanf((const char*)DbStr, "\\\\\\\\\\\\portindex=%d", &IfIndex);
-		sprintf(buffer, "portindex=%d", IfIndex);
+		sscanf((const char*)DbStr, "\\\\\\\\\\\\索引=%d", &IfIndex);  //实现索引
+		sprintf(buffer, "索引=%d", IfIndex);
 
 
 		per_''' + requestPerTabelName.lower() + '''_list[i].Fid = NOICore::StringClone(TAG_CLI_AGENT, buffer);	
@@ -1199,8 +1218,8 @@ INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_hi
 		
 		recSet.GetFid(DbStr);
 
-		sscanf((const char*)DbStr, "\\\\\\\\\\\\portindex=%d", &IfIndex);
-		sprintf(buffer, "portindex=%d", IfIndex);
+		sscanf((const char*)DbStr, "\\\\\\\\\\\\索引=%d", &IfIndex);  //TODO:实现索引
+		sprintf(buffer, "索引=%d", IfIndex);
 
 		per_''' + requestPerTabelName.lower() + '''_list[i].Fid = NOICore::StringClone(TAG_CLI_AGENT, buffer);
 	}
@@ -1240,6 +1259,7 @@ CPerNe::CPerNe(const NSPMag::MODULEHANDLE hm, void* pCfg)
 #endif
 }
 
+///////////////////////////
 
 CPerNe::~CPerNe()
 {
@@ -1253,7 +1273,7 @@ CPerNe::~CPerNe()
 #endif
 }
 
-
+///////////////////////
 
 INT CPerNe::InitModule(NSPMag* pMag,void* pCfg)
 {
@@ -1271,7 +1291,7 @@ INT CPerNe::InitModule(NSPMag* pMag,void* pCfg)
 #endif
 }
 
-
+/////////////////////////
 
 INT CPerNe::Start()
 {
@@ -1280,7 +1300,7 @@ INT CPerNe::Start()
 #endif
 }
 
-
+//////////////////////////
 
 INT CPerNe::RegDsSrc()
 {
@@ -1289,6 +1309,7 @@ INT CPerNe::RegDsSrc()
 #endif
 }
 
+///////////////////////////
 
 INT CPerNe::UnRegDsSrc()
 {
@@ -1297,10 +1318,52 @@ INT CPerNe::UnRegDsSrc()
 #endif
 }
 
+////////////////////////////
+
+INT CPerNe::Stop()
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	unregister_proxy_tbl_hook(CRecordSetPer''' + requestPerTabelName + '''Cur::GetTableName());
+#endif
+}
+
+/////////////////////////
+
+void CPerNe::fullSyncFunc(void* pArg, ULong dataType, ULong64 recvId)
+{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+	CRecordSetPer''' + requestPerTabelName + '''His ''' + requestPerTabelName + '''His(TAG_CMM_PER);
+#endif
+
+    //............
+    
+	switch(dataType)
+	{
+#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
+		case TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable):
+			{
+				sData.data.Insert(TID_TO_TEID2(TID_TColValue, te_sequence), ''' + requestPerTabelName + '''His.GetVTable(), TAG_CMM_PER);
+				sData.dataType = TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable);
+				SendSyncData(sData, sData.dst, 0);
+			}
+		break;
+#endif
+	}
+}
+
+//	TODO:如果有绘图的需要在这里添加以下类似代码
+const Long64 PTPTIME_OFFSET_MAX = 1000;
 
 
 INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet period, Long index, CBString &dataFidBuf)
 {
+//	TODO:如果有绘图的需要改成以下代码
+//	Long64 offsetTemp = 0;
+
+    //..................
+
+//	TODO:如果有绘图的需要改成以下代码
+//	MPer''' + requestPerTabelName + '''V1* pData''' + requestPerTabelName + ''' = NULL;
 	MPer''' + requestPerTabelName + '''* pData''' + requestPerTabelName + ''' = NULL;
 	
 	//................
@@ -1308,12 +1371,39 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 	switch (pNode->type)
 	{
 	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
+//		TODO:如果有绘图的需要改成以下代码
+//		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''V1*)pHis->data.ParamOut();
+//		EXPORT_DATA2_NEW(pDataPtpTime->PerPtpTime, SyncResTimeCur, llTemp, period, pNode);
+
 		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''*)pHis->data.ParamOut();'''
 
     for requestPerNameTemp in requestPerNameList:
         if not (re.search(r'Rate$', requestPerNameTemp)):
             outString += '''
 		EXPORT_DATA_NEW(pData''' + requestPerTabelName + ''', ''' + requestPerNameTemp + ''', llTemp, period, pNode);'''
+
+    if needCalc:
+        outString += '''
+        
+//		TODO:如果有绘图的需要在这里添加以下类似代码
+//		if (PerPeriodList_Min15 == period)
+//		{
+//			if (pNode->perMonStat[LPerId_OffsetCur].is15minMon)
+//			{
+//				for (int i = 1; i <= PER_SEC_15M; i++)
+//				{
+//					offsetTemp = pDataPtpTime->OffsetStatArray[i-1];
+//					if (offsetTemp != PTPTIME_OFFSET_MAX)
+//					{
+//						NSPSNPrintf(prtBuf, sizeof(prtBuf), "%d", offsetTemp);
+//						dataBuf.format("S OffsetIndex%d %s\\n", i, prtBuf);
+//						my_fprintf(dataBuf);
+//					}	
+//				}
+//			}
+//		}
+
+'''
 
     outString += '''
 		break;
@@ -1332,8 +1422,7 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 
 void CPerNe::ProcPerHisTable(SEQUENCE<MPerHistory>& data, const SEQUENCE<Long> & flag)
 {
-	//''' + requestPerTabelName.lower() + '''
-	else if (PerObjTypeList_''' + requestPerTabelName.lower() + '''== data[i].type)
+	else if (PerObjTypeList_''' + requestPerTabelName.lower() + '''== data[i].type) //''' + requestPerTabelName.lower() + '''
 	{
 #ifdef PER_FB_''' + requestPerTabelName.upper() + '''
 		sData.dataType = TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''His, te_spectable);
@@ -1454,35 +1543,6 @@ LDataType PerSupport[] =
 
 /////////////////////////////////////
 
-INT CPerChss::Start()
-{
-#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
-	ret = register_proxy_data(TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''Cur, te_spectable), 
-		m_ulFullModId, 
-		this, 
-		(proxy_data_query_callback)per_data_provide_notify);
-	if(ret)
-	{
-		NSPLog::log(per_chss_log_id, NSPLog::L_ERROR, -1,
-			"per chss %d reg proxy table:%d,ret %d\\n", 
-			m_ChssPos, LDataType_Per''' + requestPerTabelName + '''Cur, ret);
-	}
-#endif
-}
-
-///////////////////////////
-
-INT CPerChss::Stop()
-{
-#ifdef PER_FB_''' + requestPerTabelName.upper() + '''
-    unregister_proxy_data(TID_TO_TEID2(LDataType_Per''' + requestPerTabelName + '''Cur, te_spectable), 
-		m_ulFullModId, 
-		this, 
-		(proxy_data_query_callback)per_data_provide_notify);
-#endif
-}
-
-//////////////////////////////////
 
 INT CPerChss::Cur2His(time_t StartTime, time_t EndTime, const Octet periodType)
 {
@@ -1887,12 +1947,12 @@ void ''' + className + '''::Init()
     if needCalc:
         outString += '''
     
-	//TODO:如果有绘图的需要在这里添加以下类似代码
-	//for (int i = 0; i < PER_SEC_15M; i++)
-	//{
-	//	OffsetStatArray[i] = PTPTIME_OFFSET_MAX;
-	//}
-	//OffsetIndex = 0;'''
+//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	for (int i = 0; i < PER_SEC_15M; i++)
+//	{
+//		OffsetStatArray[i] = PTPTIME_OFFSET_MAX;
+//	}
+//	OffsetIndex = 0;'''
 
     outString += '''
 }
@@ -1979,6 +2039,9 @@ void ''' + className + '''::Update( ''' + className + '''& newData )
             elif (re.search(r'Max$', requestPerNameTemp)):
                 addStringTemp = '''
 	PER_PRIM_UPDATE_MAX(''' + requestPerNameTemp + ''', newData.''' + re.sub(r'Max$', '', requestPerNameTemp) + '''Cur);'''
+            elif (re.search(r'Mean$', requestPerNameTemp)):
+                addStringTemp = '''
+	PER_PRIM_UPDATE_MEAN(''' + requestPerNameTemp + ''', newData.''' + re.sub(r'Mean$', '', requestPerNameTemp) + '''Cur, ''' + re.sub(r'Mean$', '', requestPerNameTemp) + '''CountNum);'''
             else:
                 addStringTemp = '''
 	PER_PRIM_ADD_NEW(''' + requestPerNameTemp + ''');'''
@@ -1992,13 +2055,12 @@ void ''' + className + '''::Update( ''' + className + '''& newData )
     if needCalc:
         outString += '''
     
-    //TODO:如果有绘图的需要在这里添加以下类似代码
-   	//if (OffsetCurMonStat)
-	//{
-	//	OffsetCur = newData.OffsetCur;
-	//	OffsetStatArray[OffsetIndex] = (Short)newData.OffsetCur;
-	//	OffsetIndex = (OffsetIndex+1) % PER_SEC_15M;
-	//}'''
+//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	if (OffsetCurMonStat)
+//	{
+//		OffsetStatArray[OffsetIndex] = (Short)newData.OffsetCur;
+//		OffsetIndex = (OffsetIndex+1) % PER_SEC_15M;
+//	}'''
 
     outString += '''
 }
@@ -2013,14 +2075,14 @@ void ''' + className + '''::Cur2His( ''' + className + '''* pRec, const Octet pe
     if needCalc:
         outString +='''
     
-    //TODO:如果有绘图的需要在这里添加以下类似代码
-	//if (OffsetCurMonStat == 1)
-	//{
-	//	for (int i = 0; i < PER_SEC_15M; i++)
-	//	{
-	//		pRec->OffsetStatArray[i] = OffsetStatArray[i];
-	//	}
-	//}'''
+//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	if (OffsetCurMonStat == 1)
+//	{
+//		for (int i = 0; i < PER_SEC_15M; i++)
+//		{
+//			pRec->OffsetStatArray[i] = OffsetStatArray[i];
+//		}
+//	}'''
 
     outString += '''
 }
@@ -2109,8 +2171,13 @@ void ''' + className + '''::SetHisRec( void* pRec )
 
 void ''' + className + '''::CreateAnyData( Any& data )
 {
+//	TODO:如果有绘图的需要改成以下代码
+//	MPer''' + requestPerTabelName + '''V1 per;
 	MPer''' + requestPerTabelName + ''' per;
-    '''
+
+//	TODO:如果有绘图的需要改成以下代码
+	PER_VALUE_SET(per.PerPtpTime, SyncResTimeCur);
+'''
 
     for requestPerNameTemp in requestPerNameList:
         if not (re.search(r'Rate$', requestPerNameTemp)):
@@ -2120,11 +2187,12 @@ void ''' + className + '''::CreateAnyData( Any& data )
     if needCalc:
         outString += '''
     
-    //TODO:如果有绘图的需要在这里添加以下类似代码
-	//for (int i = 0; i < PER_SEC_15M; i++)
-	//{
-	//	per.OffsetStatArray[i] = OffsetStatArray[i];
-	//}
+//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	for (int i = 0; i < PER_SEC_15M; i++)
+//	{
+//		per.OffsetStatArray[i] = OffsetStatArray[i];
+//	}
+
 	data.Insert(TID_TO_TEID(TID_MPer''' + requestPerTabelName + '''), &per, TAG_CMM_PER);'''
 
     outString += '''
@@ -2242,11 +2310,17 @@ struct ''' + className + '''
         outString += addStringTemp
 
     if needCalc:
+        outString += '\n'
+        for requestPerNameTemp in requestPerNameList:
+            if re.search(r'Mean$', requestPerNameTemp):
+                outString += '''
+	int ''' + re.sub(r'Mean$', '', requestPerNameTemp) + '''CountNum;'''
         outString += '''
 
-	//TODO:如果有绘图的需要在这里添加以下类似代码
-	//Short OffsetStatArray[PER_SEC_15M];
-	//int    OffsetIndex;'''
+//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	Short OffsetStatArray[PER_SEC_15M];
+//	int    OffsetIndex;
+'''
 
     for requestPerNameTemp in requestPerNameList:
         outString += '''
@@ -2477,30 +2551,8 @@ def getPerObjTypeList(requestPerTabelName, requestPerObjTypeListId):
         </val>
       </Any>'''
 
-
-def getNeBaseOtrEnd(requestPerTabelName):
-    return '''
-</attrib>
-
-
-/////////////////////////////////
-
-<str value="MPer''' + requestPerTabelName + '''"></str>
-
-            '''
-
-
-def getNeBaseOtrData(requestPerNameTemp):
-    return '''
-<attribelem typename="Long64" typekind="0" typeid="0" acl="3" name="''' + requestPerNameTemp + '''">
-<memo id="0"><![CDATA[]]></memo>
-<memo id="1"><![CDATA[]]></memo>
-<memo id="2"><![CDATA[]]></memo>
-</attribelem>'''
-
-
-def getNeBaseOtrStart(requestPerTabelName):
-    neBase = '''
+def getNeBaseOtr(requestPerTabelName, requestPerNameList):
+    outString = '''
 <attrib key="MPer''' + requestPerTabelName + '''">
 <prop typekind="0" typeid="组ID" size="0" name="MPer''' + requestPerTabelName + '''">
 </prop>
@@ -2508,7 +2560,45 @@ def getNeBaseOtrStart(requestPerTabelName):
 <memo id="0"><![CDATA[]]></memo>
 <memo id="1"><![CDATA[]]></memo>
 <memo id="2"><![CDATA[]]></memo>'''
-    return neBase
+
+    for requestPerNameTemp in requestPerNameList:
+        outString += '''
+<attribelem typename="Long64" typekind="0" typeid="0" acl="3" name="''' + requestPerNameTemp + '''">
+<memo id="0"><![CDATA[]]></memo>
+<memo id="1"><![CDATA[]]></memo>
+<memo id="2"><![CDATA[]]></memo>
+</attribelem>'''
+
+    outString += '''
+</attrib>
+{#TODO:如果有绘图的需要在这里添加以下类似代码#}
+{#<attrib key="MPer''' + requestPerTabelName + '''V1">#}
+{#<prop typekind="0" typeid="0" size="0" name="MPerPtpTimeV1">#}
+{#</prop>#}
+{#<parent value=""></parent>#}
+{#<memo id="0"><![CDATA[]]></memo>#}
+{#<memo id="1"><![CDATA[]]></memo>#}
+{#<memo id="2"><![CDATA[]]></memo>#}
+{#<attribelem typename="MPerPtpTime" typekind="0" typeid="0" acl="3" name="PerPtpTime">#}
+{#<memo id="0"><![CDATA[]]></memo>#}
+{#<memo id="1"><![CDATA[]]></memo>#}
+{#<memo id="2"><![CDATA[]]></memo>#}
+{#</attribelem>#}
+{#<attribelem typename="VShort900" typekind="0" typeid="0" acl="3" name="OffsetStatArray">#}
+{#<memo id="0"><![CDATA[]]></memo>#}
+{#<memo id="1"><![CDATA[]]></memo>#}
+{#<memo id="2"><![CDATA[]]></memo>#}
+{#</attribelem>#}
+{#</attrib>#}
+
+/////////////////////////////////
+
+<str value="MPer''' + requestPerTabelName + '''"></str>
+{#TODO:如果有绘图的需要在这里添加以下类似代码#}
+{#<str value="MPer''' + requestPerTabelName + '''V1"></str>#}
+'''
+
+    return outString
 
 
 def setPerXXXHisEnd(PerXXXHis):
@@ -2835,8 +2925,10 @@ def getPerIdUnit(requestPerIdTemp):
       </Any>'''
 
 
-def getLPerId(requestPerIdTemp, requestPerNameTemp):
-    LPerIdTemp = '''
+def getLPerId(requestPerIdList, requestPerNameTempList):
+    OutString = ''
+    for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameTempList, requestPerIdList):
+        OutString += '''
         <Any>
           <val teid="Any_Seq">
             <val>
@@ -2858,5 +2950,29 @@ def getLPerId(requestPerIdTemp, requestPerNameTemp):
             </val>
           </val>
         </Any>'''
-    return LPerIdTemp
+
+    OutString += '''
+	  <Any>
+        <val teid="Any_Seq">
+          <val>
+            <Any>
+              <val teid="Short" val="最大值+1"/>
+            </Any>
+            <Any>
+              <val teid="String" val="PERID MAX"/>
+            </Any>
+            <Any>
+              <val teid="String" val="PERID MAX"/>
+            </Any>
+            <Any>
+              <val teid="String" val="MAX"/>
+            </Any>
+            <Any>
+              <val teid="String" val="Perid Max value"/>
+            </Any>
+          </val>
+        </val>
+      </Any>'''
+
+    return OutString
 
