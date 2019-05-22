@@ -1076,7 +1076,7 @@ char* per_''' + requestPerTabelName.lower() + '''_cur::FormatInfo()
 {
 	char buffer[2000] = {0};
 
-	MY_SNPRINTF(buffer, sizeof(buffer),"%sFid:				 %s\\n",  buffer,(const char*)Fid);'''
+	MY_SNPRINTF(buffer + strlen(buffer), sizeof(buffer),"Fid:				 %s\\n",(const char*)Fid);'''
 
     for requestPerNameTemp in requestPerNameList:
         if re.search(r'Min$', requestPerNameTemp):
@@ -1156,9 +1156,9 @@ char* per_''' + requestPerTabelName.lower() + '''_his::FormatInfo()
 {
 	char buffer[2000] = {0};
 	
-	MY_SNPRINTF(buffer, sizeof(buffer),"%s Fid:                  %s\\n",  buffer, (const char*)Fid); 
-	MY_SNPRINTF(buffer, sizeof(buffer),"%s Index Number:         %d\\n", buffer, IdxNum);
-	MY_SNPRINTF(buffer, sizeof(buffer),"%s End Time:             %04d-%02d-%02d,%02d:%02d:%02d\\n",  buffer, 
+	MY_SNPRINTF(buffer + strlen(buffer), sizeof(buffer),"Fid:                  %s\\n", (const char*)Fid); 
+	MY_SNPRINTF(buffer + strlen(buffer), sizeof(buffer),"Index Number:         %d\\n", IdxNum);
+	MY_SNPRINTF(buffer + strlen(buffer), sizeof(buffer),"End Time:             %04d-%02d-%02d,%02d:%02d:%02d\\n", 
 		endTime.wYear,endTime.byMonth,endTime.byDay,endTime.byHour,endTime.byMinute,endTime.bySecond);'''
 
     for requestPerNameTemp in requestPerNameList:
@@ -1351,18 +1351,18 @@ void CPerNe::fullSyncFunc(void* pArg, ULong dataType, ULong64 recvId)
 	}
 }
 
-//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 const Long64 PTPTIME_OFFSET_MAX = 1000;
 
 
 INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet period, Long index, CBString &dataFidBuf)
 {
-//	TODO:如果有绘图的需要改成以下代码
+//	TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
 //	Long64 offsetTemp = 0;
 
     //..................
 
-//	TODO:如果有绘图的需要改成以下代码
+//	TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
 //	MPer''' + requestPerTabelName + '''V1* pData''' + requestPerTabelName + ''' = NULL;
 	MPer''' + requestPerTabelName + '''* pData''' + requestPerTabelName + ''' = NULL;
 	
@@ -1371,7 +1371,7 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 	switch (pNode->type)
 	{
 	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
-//		TODO:如果有绘图的需要改成以下代码
+//		TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
 //		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''V1*)pHis->data.ParamOut();
 //		EXPORT_DATA2_NEW(pDataPtpTime->PerPtpTime, SyncResTimeCur, llTemp, period, pNode);
 
@@ -1385,7 +1385,7 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
     if needCalc:
         outString += '''
         
-//		TODO:如果有绘图的需要在这里添加以下类似代码
+//		TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 //		if (PerPeriodList_Min15 == period)
 //		{
 //			if (pNode->perMonStat[LPerId_OffsetCur].is15minMon)
@@ -1947,7 +1947,7 @@ void ''' + className + '''::Init()
     if needCalc:
         outString += '''
     
-//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 //	for (int i = 0; i < PER_SEC_15M; i++)
 //	{
 //		OffsetStatArray[i] = PTPTIME_OFFSET_MAX;
@@ -2055,7 +2055,7 @@ void ''' + className + '''::Update( ''' + className + '''& newData )
     if needCalc:
         outString += '''
     
-//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 //	if (OffsetCurMonStat)
 //	{
 //		OffsetStatArray[OffsetIndex] = (Short)newData.OffsetCur;
@@ -2075,7 +2075,7 @@ void ''' + className + '''::Cur2His( ''' + className + '''* pRec, const Octet pe
     if needCalc:
         outString +='''
     
-//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 //	if (OffsetCurMonStat == 1)
 //	{
 //		for (int i = 0; i < PER_SEC_15M; i++)
@@ -2171,11 +2171,11 @@ void ''' + className + '''::SetHisRec( void* pRec )
 
 void ''' + className + '''::CreateAnyData( Any& data )
 {
-//	TODO:如果有绘图的需要改成以下代码
+//	TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
 //	MPer''' + requestPerTabelName + '''V1 per;
 	MPer''' + requestPerTabelName + ''' per;
 
-//	TODO:如果有绘图的需要改成以下代码
+//	TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
 	PER_VALUE_SET(per.PerPtpTime, SyncResTimeCur);
 '''
 
@@ -2187,7 +2187,7 @@ void ''' + className + '''::CreateAnyData( Any& data )
     if needCalc:
         outString += '''
     
-//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 //	for (int i = 0; i < PER_SEC_15M; i++)
 //	{
 //		per.OffsetStatArray[i] = OffsetStatArray[i];
@@ -2317,7 +2317,7 @@ struct ''' + className + '''
 	int ''' + re.sub(r'Mean$', '', requestPerNameTemp) + '''CountNum;'''
         outString += '''
 
-//	TODO:如果有绘图的需要在这里添加以下类似代码
+//	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 //	Short OffsetStatArray[PER_SEC_15M];
 //	int    OffsetIndex;
 '''
@@ -2571,31 +2571,31 @@ def getNeBaseOtr(requestPerTabelName, requestPerNameList):
 
     outString += '''
 </attrib>
-{#TODO:如果有绘图的需要在这里添加以下类似代码#}
-{#<attrib key="MPer''' + requestPerTabelName + '''V1">#}
-{#<prop typekind="0" typeid="0" size="0" name="MPerPtpTimeV1">#}
-{#</prop>#}
-{#<parent value=""></parent>#}
-{#<memo id="0"><![CDATA[]]></memo>#}
-{#<memo id="1"><![CDATA[]]></memo>#}
-{#<memo id="2"><![CDATA[]]></memo>#}
-{#<attribelem typename="MPerPtpTime" typekind="0" typeid="0" acl="3" name="PerPtpTime">#}
-{#<memo id="0"><![CDATA[]]></memo>#}
-{#<memo id="1"><![CDATA[]]></memo>#}
-{#<memo id="2"><![CDATA[]]></memo>#}
-{#</attribelem>#}
-{#<attribelem typename="VShort900" typekind="0" typeid="0" acl="3" name="OffsetStatArray">#}
-{#<memo id="0"><![CDATA[]]></memo>#}
-{#<memo id="1"><![CDATA[]]></memo>#}
-{#<memo id="2"><![CDATA[]]></memo>#}
-{#</attribelem>#}
-{#</attrib>#}
+<!--TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图-->
+<!--<attrib key="MPer''' + requestPerTabelName + '''V1">-->
+<!--<prop typekind="0" typeid="0" size="0" name="MPerPtpTimeV1">-->
+<!--</prop>-->
+<!--<parent value=""></parent>-->
+<!--<memo id="0"><![CDATA[]]></memo>-->
+<!--<memo id="1"><![CDATA[]]></memo>-->
+<!--<memo id="2"><![CDATA[]]></memo>-->
+<!--<attribelem typename="MPerPtpTime" typekind="0" typeid="0" acl="3" name="PerPtpTime">-->
+<!--<memo id="0"><![CDATA[]]></memo>-->
+<!--<memo id="1"><![CDATA[]]></memo>-->
+<!--<memo id="2"><![CDATA[]]></memo>-->
+<!--</attribelem>-->
+<!--<attribelem typename="VShort900" typekind="0" typeid="0" acl="3" name="OffsetStatArray">-->
+<!--<memo id="0"><![CDATA[]]></memo>-->
+<!--<memo id="1"><![CDATA[]]></memo>-->
+<!--<memo id="2"><![CDATA[]]></memo>-->
+<!--</attribelem>-->
+<!--</attrib>-->
 
 /////////////////////////////////
 
 <str value="MPer''' + requestPerTabelName + '''"></str>
-{#TODO:如果有绘图的需要在这里添加以下类似代码#}
-{#<str value="MPer''' + requestPerTabelName + '''V1"></str>#}
+<!--TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图-->
+<!--<str value="MPer''' + requestPerTabelName + '''V1"></str>-->
 '''
 
     return outString
