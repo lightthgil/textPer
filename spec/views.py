@@ -2754,7 +2754,8 @@ def getNeBaseOtr(requestPerTabelName, requestPerNameList):
 <memo id="2"><![CDATA[]]></memo>'''
 
     for requestPerNameTemp in requestPerNameList:
-        outString += '''
+        if not (re.search(r'Rate$', requestPerNameTemp)):
+            outString += '''
 <attribelem typename="Long64" typekind="0" typeid="0" acl="3" name="''' + requestPerNameTemp + '''">
 <memo id="0"><![CDATA[]]></memo>
 <memo id="1"><![CDATA[]]></memo>
