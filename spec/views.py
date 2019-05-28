@@ -193,7 +193,7 @@ def getPerPrcsBase(requestPrimNameList, requestPrimIdList):
         index = 0
         for primId in requestPrimIdList[1:]:
             index += 1
-            if not (primId == (primIdLast + 1)):
+            if not (int(primId) == (int(primIdLast) + 1)):
                 primNameStart = requestPrimNameList[index]
                 outSrting = '''
 INT CPerProcessBase<PerNodeType, PerPrimType>::GetPrimHw()
@@ -425,7 +425,7 @@ INT CCardHwOPXX::GetPerPrimIdData(UShort primId, SEQUENCE<TPer>& data, Long flag
         primIdLast = requestPrimIdList[0]
         index = 0
         for primId in requestPrimIdList[1:]:
-            if not (primId == (primIdLast + 1)):
+            if not (int(primId) == (int(primIdLast) + 1)):
                 primRange += '(primId >= LPerPrimId_' + primNameLast + ' && primId <= LPerPrimId_' + requestPrimNameList[index - 1] + ') ||\n'
                 primNameLast = requestPrimNameList[index]
             primIdLast = primId
