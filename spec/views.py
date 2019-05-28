@@ -137,7 +137,7 @@ def index(request):
         setPerXXXHisEnd(PerXXXHis)
         neBase = getNeBaseOtr(requestPerTabelName, requestPerNameListTemp)
 
-        perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameListTemp, requestPrimNameListNew)
+        perToolsCpp = getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameListTemp, requestPerIdListTemp, requestPrimNameListNew)
         perToolsH = getPerToolsH(requestPerTabelName, requestPerNameListTemp, requestPrimNameListNew)
         toolFidCpp = getToolFidCpp(requestPerTabelName)
         MtnCmdDcCpp = getMtnCmdDcCpp(requestPerTabelName)
@@ -649,6 +649,29 @@ struct utons_cli_element show_counters_cli =
 
 //////////////////////////////////
 
+//TODO:如果需要上报告警，添加以下类似代码
+//char *set_alarm_help[] =
+//{
+//	"Alarm CumulatedOffsetThr",
+//}
+//
+//struct utons_cli_element set_alarm_cli =
+//{
+//		 | cumulatedoffsetthr
+//}
+//
+//char *no_alarm_help[] =
+//{
+//	"Alarm CumulatedOffsetThr",
+//}
+//
+//struct utons_cli_element no_alarm_cli =
+//{
+//		 | cumulatedoffsetthr
+//}
+
+//////////////////////////////////
+
 int set_performance_monitor (struct utons_cli *cli, int argc, char **argv)
 {
 	else if(0 == strcmp(argv[0], "索引"))
@@ -1055,6 +1078,14 @@ struct per_''' + requestPerTabelName.lower() + '''_his
 /////////////////////////////////////////
 
 INT per_his_counters_get(SEQUENCE<per_''' + requestPerTabelName.lower() + '''_his>& per_''' + requestPerTabelName.lower() + '''_list, String expression=NULL);
+
+////////////////////////////////////////
+
+//TODO:如果需要上报告警，添加以下类似代码
+//const struct cli_alm_info cli_alm_list[400] = 
+//{
+//    {LAlmId_CumulatedOffsetThr, "CumulatedOffsetThr", 4},
+//}
 '''
 
     return outString
@@ -1352,7 +1383,7 @@ void CPerNe::fullSyncFunc(void* pArg, ULong dataType, ULong64 recvId)
 }
 
 //	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
-const Long64 PTPTIME_OFFSET_MAX = 1000;
+const Long64 ''' + requestPerTabelName.upper() + '''_OFFSET_MAX = 1000;
 
 
 INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet period, Long index, CBString &dataFidBuf)
@@ -1373,7 +1404,7 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 	case PerObjTypeList_''' + requestPerTabelName.lower() + ''':
 //		TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
 //		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''V1*)pHis->data.ParamOut();
-//		EXPORT_DATA2_NEW(pDataPtpTime->PerPtpTime, SyncResTimeCur, llTemp, period, pNode);
+//		EXPORT_DATA2_NEW(pData''' + requestPerTabelName + '''->Per''' + requestPerTabelName + ''', SyncResTimeCur, llTemp, period, pNode);
 
 		pData''' + requestPerTabelName + ''' = (MPer''' + requestPerTabelName + '''*)pHis->data.ParamOut();'''
 
@@ -1392,8 +1423,8 @@ INT CPerNe::SaveHistoryToFile(my_FILEP fp, SPerHisStorage* pNode, const Octet pe
 //			{
 //				for (int i = 1; i <= PER_SEC_15M; i++)
 //				{
-//					offsetTemp = pDataPtpTime->OffsetStatArray[i-1];
-//					if (offsetTemp != PTPTIME_OFFSET_MAX)
+//					offsetTemp = pData''' + requestPerTabelName + '''->OffsetStatArray[i-1];
+//					if (offsetTemp != ''' + requestPerTabelName.upper() + '''_OFFSET_MAX)
 //					{
 //						NSPSNPrintf(prtBuf, sizeof(prtBuf), "%d", offsetTemp);
 //						dataBuf.format("S OffsetIndex%d %s\\n", i, prtBuf);
@@ -1822,7 +1853,7 @@ extern INT CvtFid2Long64ToStr(const Long64 llFid, const PerObjTypeList type, Str
 	}
 }'''
 
-def getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameList, requestPrimNameList):
+def getPerToolsCpp(requestPerTabelName, requestPerObjTypeListId, requestPerFbId, requestPerNameList, requestPerIdListTemp, requestPrimNameList):
     needCalc = isNeedCalc(requestPerNameList)
     outString = '''
 const Short perIdList[][MAX_PRIM_COUNT] = 
@@ -1840,14 +1871,26 @@ const Short perIdList[][MAX_PRIM_COUNT] =
 
 /////////////////////////////////
 
+const PerProfile perDefaultTr[MAX_PER_ID] = 
+{'''
+
+    for requestPerNameTemp, requestPerIdTemp in zip(requestPerNameList, requestPerIdListTemp):
+        outString += '''
+	{0, 0, 0, 0, 0, 0, 0},	//LPerId_''' + requestPerNameTemp + ''' = ''' + str(requestPerIdTemp) + '''			//TODO:如果需要上报告警,将该值完善'''
+
+    outString += '''
+}	
+
+////////////////////////////////////////
+
 '''
     outString +='''
 const PER_FB_INFO_ITEM perFbInfoTable[LPerFb_max] = 
 {
 	{
 		LPerPrimId_''' + requestPrimNameList[0] + ''', ''' + str(len(requestPrimNameList)) + ''', 0,
- 		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上本地检测的告警列表
- 		{0, 0, 0, 0, 0, 0, 0, 0},   //TODO:填上远端缺陷的告警列表
+ 		{0, 0, 0, 0, 0, 0, 0, 0},
+ 		{0, 0, 0, 0, 0, 0, 0, 0},
 	},  //''' + requestPerTabelName.lower() + '''     LPerFb_''' + requestPerTabelName.lower() + ''' = ''' + requestPerFbId + '''
 };
 
@@ -1950,7 +1993,7 @@ void ''' + className + '''::Init()
 //	TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图
 //	for (int i = 0; i < PER_SEC_15M; i++)
 //	{
-//		OffsetStatArray[i] = PTPTIME_OFFSET_MAX;
+//		OffsetStatArray[i] = ''' + requestPerTabelName.upper() + '''_OFFSET_MAX;
 //	}
 //	OffsetIndex = 0;'''
 
@@ -2173,10 +2216,11 @@ void ''' + className + '''::CreateAnyData( Any& data )
 {
 //	TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
 //	MPer''' + requestPerTabelName + '''V1 per;
+
 	MPer''' + requestPerTabelName + ''' per;
 
 //	TODO:如果有历史性能绘图的需要改成以下代码，当前性能网管可以绘图
-	PER_VALUE_SET(per.PerPtpTime, SyncResTimeCur);
+//	PER_VALUE_SET(per.Per''' + requestPerTabelName + ''', SyncResTimeCur);
 '''
 
     for requestPerNameTemp in requestPerNameList:
@@ -2204,6 +2248,77 @@ void ''' + className + '''::JudgeCrossThr( const Octet period, Long64 fid, MPerT
 	NSP_TEMP_UNUSED_ARG(fid);
 	NSP_TEMP_UNUSED_ARG(thr);
 	NSP_TEMP_UNUSED_ARG(alm);
+	
+	//TODO:如果需要上报告警，改成以下代码
+//	ULong  len = 0;
+//	Long64* pData = &SyncResTimeCur;
+//	UFid uFid;
+//	Short perId ;
+//	int i = 0;
+//	Long64 profileValue = 0;
+//	Short  alarmId      = 0;
+//
+//	memcpy(&uFid, &fid, sizeof(UFid));
+//
+//	while(perId = perIdList[PerObjTypeList_''' + requestPerTabelName.lower() + ''' - 1][i++])  //轮询性能对象下所有的性能基元相关的告警
+//	{
+//
+//		const PerProfile& profile = PerProfileManager::Instance()->GetProfile(perId);
+//		
+//		if (0 == profile.almId15m &&  0 == profile.almId24h)//没有性能转告警定义。
+//		{
+//			pData++;
+//			continue;
+//		}
+//		
+//		if (!almStat[perId])
+//		{
+//			if (PerPeriodList_Min15 == period)
+//			{
+//				profileValue = thr[perId].tr15Upper;
+//				alarmId = profile.almId15m;
+//			}
+//			else if (PerPeriodList_Hour24 == period)
+//			{
+//				profileValue = thr[perId].tr24;
+//				alarmId = profile.almId24h;
+//			}
+//			else
+//			{
+//				NSPASSERT(0);
+//			}
+//			if(g_per_print && ((*pData) !=0))
+//			{
+//				char ResBuf[128];
+//				char ResBuf1[128];
+//				memset(ResBuf, 0, sizeof(ResBuf));
+//				memset(ResBuf1, 0, sizeof(ResBuf1));
+//				NSPSNPrintf(ResBuf, sizeof(ResBuf), "%Ld", profileValue);
+//				NSPSNPrintf(ResBuf1, sizeof(ResBuf1), "%Ld", (*pData));
+//				NSPLog::log(per_chss_log_id, NSPLog::L_INFO, -1, "per %d profileValue %s pdata %s\\n",perId,ResBuf,ResBuf1);
+//			}
+//			if (abs(*pData) > profileValue)
+//			{
+//				almStat[perId] = True;
+//				len = alm.Length();
+//				alm.SetLength(len + 1);
+//				alm[len].almId = alarmId;
+//				alm[len].stat = True;
+//				alm[len].almSrcSlot = uFid.fid.slot;
+//				alm[len].fid = fid;
+//				alm[len].fidType = LFidType_''' + requestPerTabelName.lower() + ''';
+//
+//				if(g_per_print)
+//				{
+//					char almBuf[128];
+//					memset(almBuf, 0, sizeof(almBuf));
+//					NSPSNPrintf(almBuf, sizeof(almBuf), "%#lx", fid);
+//					NSPLog::log(per_chss_log_id, NSPLog::L_INFO, -1, "alarmId %d fid %s fidType %d\\n",alarmId,almBuf, alm[len].fidType);
+//				}
+//			}
+//		}
+//		pData++;
+//	}
 }
 
 void ''' + className + '''::ClearCrossThrAlm( const Octet period, Long64 fid, SEQUENCE<MAlmChss>& alm )
@@ -2211,6 +2326,46 @@ void ''' + className + '''::ClearCrossThrAlm( const Octet period, Long64 fid, SE
 	NSP_TEMP_UNUSED_ARG(period);
 	NSP_TEMP_UNUSED_ARG(fid);
 	NSP_TEMP_UNUSED_ARG(alm);
+	
+	//TODO:如果需要上报告警，改成以下代码
+//	ULong len = 0;
+//	UFid  uFid;
+//	memcpy(&uFid, &fid, sizeof(UFid));
+//	Short  alarmId = 0;
+//	Short perId;
+//	int i = 0;
+//	UFid newFid;
+//
+//	memset(&newFid, 0, sizeof(newFid));
+//
+//	while(perId = perIdList[PerObjTypeList_''' + requestPerTabelName.lower() + ''' - 1][i++])  //清除性能对象下所有的性能基元相关的告警
+//	{
+//		const PerProfile& profile = PerProfileManager::Instance()->GetProfile(perId);
+//		if (0 == profile.almId15m &&  0 == profile.almId24h)//没有性能转告警定义
+//		{
+//			continue;
+//		}
+//		almStat[perId] = False;
+//		if (PerPeriodList_Min15 == period)
+//		{
+//			alarmId = profile.almId15m;
+//		}
+//		else if (PerPeriodList_Hour24 == period)
+//		{
+//			alarmId = profile.almId24h;
+//		}
+//		else
+//		{
+//			NSPASSERT(0);
+//		}
+//		len = alm.Length();
+//		alm.SetLength(len + 1);
+//		alm[len].almId = alarmId;
+//		alm[len].stat = False;
+//		alm[len].almSrcSlot = uFid.fid.slot;
+//		alm[len].fid = fid;
+//		alm[len].fidType = LFidType_''' + requestPerTabelName.lower() + ''';
+//	}	
 }
 
 void ''' + className + '''::ClearSingleCrossThrAlm(const Octet period, Long64 fid, Short perid, SEQUENCE<MAlmChss>& alm)
@@ -2219,6 +2374,43 @@ void ''' + className + '''::ClearSingleCrossThrAlm(const Octet period, Long64 fi
 	NSP_TEMP_UNUSED_ARG(fid);
 	NSP_TEMP_UNUSED_ARG(perid);
 	NSP_TEMP_UNUSED_ARG(alm);
+
+	//TODO:如果需要上报告警，改成以下代码
+//	ULong len = 0;
+//	UFid  uFid;
+//	Short  alarmId = 0;
+//	UFid newFid;
+//	
+//	memset(&newFid, 0, sizeof(newFid));
+//	
+//	memcpy(&uFid, &fid, sizeof(UFid));
+//
+//	const PerProfile& profile = PerProfileManager::Instance()->GetProfile(perid);
+//	if (0 == profile.almId15m &&  0 == profile.almId24h)//没有性能转告警定义
+//	{
+//		return;
+//	}
+//	almStat[perid] = False;
+//	if (PerPeriodList_Min15 == period)
+//	{
+//		alarmId = profile.almId15m;
+//	}
+//	else if (PerPeriodList_Hour24 == period)
+//	{
+//		alarmId = profile.almId24h;
+//	}
+//	else
+//	{
+//		NSPASSERT(0);
+//	}
+//
+//	len = alm.Length();
+//	alm.SetLength(len + 1);
+//	alm[len].almId = alarmId;
+//	alm[len].stat = False;
+//	alm[len].almSrcSlot = uFid.fid.slot;
+//	alm[len].fid = fid;
+//	alm[len].fidType = LFidType_''' + requestPerTabelName.lower() + ''';
 }
 '''
     if not needCalc:
@@ -2573,13 +2765,13 @@ def getNeBaseOtr(requestPerTabelName, requestPerNameList):
 </attrib>
 <!--TODO:如果有历史性能绘图的需要在这里添加以下类似代码，当前性能网管可以绘图-->
 <!--<attrib key="MPer''' + requestPerTabelName + '''V1">-->
-<!--<prop typekind="0" typeid="0" size="0" name="MPerPtpTimeV1">-->
+<!--<prop typekind="0" typeid="0" size="0" name="MPer''' + requestPerTabelName + '''V1">-->
 <!--</prop>-->
 <!--<parent value=""></parent>-->
 <!--<memo id="0"><![CDATA[]]></memo>-->
 <!--<memo id="1"><![CDATA[]]></memo>-->
 <!--<memo id="2"><![CDATA[]]></memo>-->
-<!--<attribelem typename="MPerPtpTime" typekind="0" typeid="0" acl="3" name="PerPtpTime">-->
+<!--<attribelem typename="MPer''' + requestPerTabelName + '''" typekind="0" typeid="0" acl="3" name="Per''' + requestPerTabelName + '''">-->
 <!--<memo id="0"><![CDATA[]]></memo>-->
 <!--<memo id="1"><![CDATA[]]></memo>-->
 <!--<memo id="2"><![CDATA[]]></memo>-->
